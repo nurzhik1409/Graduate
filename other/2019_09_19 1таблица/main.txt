@@ -1,0 +1,327 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using MetroFramework.Forms;
+using System.Data.SqlClient;
+using System.IO;
+using System.Reflection;
+
+
+namespace Graduate
+{
+    public partial class Form1 : MetroForm
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        }
+        //public int idUser = 0;
+
+        DataSet ds;
+        SqlDataAdapter adapter;
+        string connectionString = "Server=192.168.250.25;Database=graduates;user=Rupit;password=Grib04ek:";
+        SqlDataReader sqlReader = null;
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    adapter = new SqlDataAdapter("SELECT id as num,surname as Фамилия,name as Имя, patronymic as Отчество FROM persons ", connectionString);
+                    ds = new DataSet();
+                    adapter.Fill(ds);
+                    dgv_persons.DataSource = ds.Tables[0];
+                    dgv_persons.Columns[0].Visible = false; // Скрыть id
+                    connection.Close();
+                }
+            }
+            catch (Exception ex) { MessageBox.Show(ex.Message.ToString()); }
+            finally
+            {
+                if (sqlReader != null)
+                    sqlReader.Close();
+            }
+        }
+
+        #region INSERT новую персону
+        private void Menu_addNewPerson_Click(object sender, EventArgs e)
+        {
+            new f_personalCards().ShowDialog();
+        }
+        #endregion 
+
+        #region UPDATE 2Клик по таблице, открывает личную карту с информацие о выбранном студенте
+        private void Dgv_persons_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            try
+            {
+                new f_personalCards((int)dgv_persons["num", e.RowIndex].Value).ShowDialog();
+            }
+            catch (Exception ex) { MessageBox.Show(ex.Message); }
+        }
+        #endregion
+
+        #region Временное обновление
+        private void Menu_update_Click(object sender, EventArgs e)
+        {
+            DataSet ds;
+            SqlDataAdapter adapter;
+            string connectionString = "Server=192.168.250.25;Database=graduates;user=Rupit;password=Grib04ek:";
+            SqlDataReader sqlReader = null;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    adapter = new SqlDataAdapter("SELECT id as num,surname as Фамилия,name as Имя, patronymic as Отчество FROM persons ", connectionString);
+                    ds = new DataSet();
+                    adapter.Fill(ds);
+                    dgv_persons.DataSource = ds.Tables[0];
+                    dgv_persons.Columns[0].Visible = false; // Скрыть id
+                }
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message.ToString());
+            }
+            finally
+            {
+                if (sqlReader != null)
+                    sqlReader.Close();
+            }
+        }
+        #endregion
+
+        #region DELETE Правый клик по таблице вызывает Контексное меню - удалить
+
+        // контесное меню таблицы
+        private void Dgv_persons_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == System.Windows.Forms.MouseButtons.Right) { contextDVG.Show(Cursor.Position.X, Cursor.Position.Y); }
+        }
+
+        // Выделить строку персоны
+        private void Dgv_persons_CellMouseDown(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                try
+                {
+                    dgv_persons.CurrentCell = dgv_persons.Rows[e.RowIndex].Cells[e.ColumnIndex];
+                    dgv_persons.Rows[e.RowIndex].Selected = true;
+                    dgv_persons.Focus();
+                }
+                catch (Exception ex) { MessageBox.Show(ex.Message.ToString()); }
+            }
+        }
+
+        // Контексное меню таблицы - удалить персону
+        private void ContextDVG_del_Click(object sender, EventArgs e)
+        {
+            string connectionString = "Server=192.168.250.25;Database=graduates;user=Rupit;password=Grib04ek:";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    string query = "DELETE FROM persons where id= ";
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        connection.Open();
+                        command.ExecuteNonQuery();
+                        connection.Close();
+                    }   
+                }
+            }
+            catch (Exception ex) { MessageBox.Show(ex.Message.ToString()); }
+        }
+        #endregion
+
+        #region Фильтр поиска
+        private void MButSerch_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    if (mRadio_sSurname.Checked == true)
+                    {
+                        connection.Open();
+                        SqlDataAdapter adapter = new SqlDataAdapter("SELECT id as num,surname as Фамилия,name as Имя, patronymic as Отчество, gender as пол, birthday as деньРождение," +
+                             "addressCountry as страна, addressRegion as область, addressArea as Район, addressCity as город, addressStreet as улица, addressHome as дом, addressFlat as квартира, " +
+                             "qualificationLevel as КвалификацилнныйУровень, trainingDirection as НаправленностьПодготовки , profile as Профиль, yearIssue as ГодВыпуска, " +
+                             "nameStateOrg as ГосОрганизация, nameOrg as НазваниеОрганизации, post as должность, freeWorker as СвободаВыбора, numCertificate as Справка1, numReference as Справка2, verificationArrival as ПравоСамУстройства, commentary as ДопИнфа " +
+                         "FROM persons WHERE surname LIKE '" + "%" + mTextB_Search.Text + "%" + "';", connectionString);
+                        ds = new DataSet();
+                        adapter.Fill(ds);
+                        dgv_persons.DataSource = ds.Tables[0];
+                       dgv_persons.Columns[0].Visible = false; // Скрыть id
+                        connection.Close();
+                    }
+                    if (mRadio_sNumOrg.Checked == true)
+                    {
+                        connection.Open();
+                        SqlDataAdapter adapter = new SqlDataAdapter("SELECT id as num,surname as Фамилия,name as Имя, patronymic as Отчество, gender as пол, birthday as деньРождение," +
+                             "addressCountry as страна, addressRegion as область, addressArea as Район, addressCity as город, addressStreet as улица, addressHome as дом, addressFlat as квартира, " +
+                             "qualificationLevel as КвалификацилнныйУровень, trainingDirection as НаправленностьПодготовки , profile as Профиль, yearIssue as ГодВыпуска, " +
+                             "nameStateOrg as ГосОрганизация, nameOrg as НазваниеОрганизации, post as должность, freeWorker as СвободаВыбора, numCertificate as Справка1, numReference as Справка2, verificationArrival as ПравоСамУстройства, commentary as ДопИнфа " +
+                         "FROM persons WHERE nameStateOrg LIKE '" + "%" + mTextB_Search.Text + "%" + "';", connectionString);
+                        ds = new DataSet();
+                        adapter.Fill(ds);
+                        dgv_persons.DataSource = ds.Tables[0];
+                        dgv_persons.Columns[0].Visible = false; // Скрыть id
+                        connection.Close();
+                    }
+
+                    if (mRadio_sFreeWork.Checked == true)
+                    {
+                        connection.Open();
+                        SqlDataAdapter adapter = new SqlDataAdapter("SELECT id as num,surname as Фамилия,name as Имя, patronymic as Отчество, gender as пол, birthday as деньРождение," +
+                             "addressCountry as страна, addressRegion as область, addressArea as Район, addressCity as город, addressStreet as улица, addressHome as дом, addressFlat as квартира, " +
+                             "qualificationLevel as КвалификацилнныйУровень, trainingDirection as НаправленностьПодготовки , profile as Профиль, yearIssue as ГодВыпуска, " +
+                             "nameStateOrg as ГосОрганизация, nameOrg as НазваниеОрганизации, post as должность, freeWorker as СвободаВыбора, numCertificate as Справка1, numReference as Справка2, verificationArrival as ПравоСамУстройства, commentary as ДопИнфа " +
+                         "FROM persons WHERE freeWorker LIKE '" + "%" + mTextB_Search.Text + "%" + "';", connectionString);
+                        ds = new DataSet();
+                        adapter.Fill(ds);
+                        dgv_persons.DataSource = ds.Tables[0];
+                        dgv_persons.Columns[0].Visible = false; // Скрыть id
+                        connection.Close();
+                    }
+                    if (mRadio_sGender.Checked == true)
+                    {
+                        connection.Open();
+                        SqlDataAdapter adapter = new SqlDataAdapter("SELECT id as num,surname as Фамилия,name as Имя, patronymic as Отчество, gender as пол, birthday as деньРождение," +
+                             "addressCountry as страна, addressRegion as область, addressArea as Район, addressCity as город, addressStreet as улица, addressHome as дом, addressFlat as квартира, " +
+                             "qualificationLevel as КвалификацилнныйУровень, trainingDirection as НаправленностьПодготовки , profile as Профиль, yearIssue as ГодВыпуска, " +
+                             "nameStateOrg as ГосОрганизация, nameOrg as НазваниеОрганизации, post as должность, freeWorker as СвободаВыбора, numCertificate as Справка1, numReference as Справка2, verificationArrival as ПравоСамУстройства, commentary as ДопИнфа " +
+                         "FROM persons WHERE gender LIKE '" + "%" + mTextB_Search.Text + "%" + "';", connectionString);
+                        ds = new DataSet();
+                        adapter.Fill(ds);
+                        dgv_persons.DataSource = ds.Tables[0];
+                        dgv_persons.Columns[0].Visible = false; // Скрыть id
+                        connection.Close();
+                    }
+
+                    if (mRadio_sPost.Checked == true)
+                    {
+                        connection.Open();
+                        SqlDataAdapter adapter = new SqlDataAdapter("SELECT id as num,surname as Фамилия,name as Имя, patronymic as Отчество, gender as пол, birthday as деньРождение," +
+                             "addressCountry as страна, addressRegion as область, addressArea as Район, addressCity as город, addressStreet as улица, addressHome as дом, addressFlat as квартира, " +
+                             "qualificationLevel as КвалификацилнныйУровень, trainingDirection as НаправленностьПодготовки , profile as Профиль, yearIssue as ГодВыпуска, " +
+                             "nameStateOrg as ГосОрганизация, nameOrg as НазваниеОрганизации, post as должность, freeWorker as СвободаВыбора, numCertificate as Справка1, numReference as Справка2, verificationArrival as ПравоСамУстройства, commentary as ДопИнфа " +
+                         "FROM persons WHERE post LIKE '" + "%" + mTextB_Search.Text + "%" + "';", connectionString);
+                        ds = new DataSet();
+                        adapter.Fill(ds);
+                        dgv_persons.DataSource = ds.Tables[0];
+                        dgv_persons.Columns[0].Visible = false; // Скрыть id
+                        connection.Close();
+                    }
+                    if (mRadio_sYearIssue.Checked == true)
+                    {
+                        connection.Open();
+                        SqlDataAdapter adapter = new SqlDataAdapter("SELECT id as num,surname as Фамилия,name as Имя, patronymic as Отчество, gender as пол, birthday as деньРождение," +
+                             "addressCountry as страна, addressRegion as область, addressArea as Район, addressCity as город, addressStreet as улица, addressHome as дом, addressFlat as квартира, " +
+                             "qualificationLevel as КвалификацилнныйУровень, trainingDirection as НаправленностьПодготовки , profile as Профиль, yearIssue as ГодВыпуска, " +
+                             "nameStateOrg as ГосОрганизация, nameOrg as НазваниеОрганизации, post as должность, freeWorker as СвободаВыбора, numCertificate as Справка1, numReference as Справка2, verificationArrival as ПравоСамУстройства, commentary as ДопИнфа " +
+                         "FROM persons WHERE yearIssue LIKE '" + "%" + mTextB_Search.Text + "%" + "';", connectionString);
+                        ds = new DataSet();
+                        adapter.Fill(ds);
+                        dgv_persons.DataSource = ds.Tables[0];
+                        dgv_persons.Columns[0].Visible = false; // Скрыть id
+                        connection.Close();
+                    }
+
+                    if (mRadio_sTrainingDirection.Checked == true)
+                    {
+                        connection.Open();
+                        SqlDataAdapter adapter = new SqlDataAdapter("SELECT id as num,surname as Фамилия,name as Имя, patronymic as Отчество, gender as пол, birthday as деньРождение," +
+                             "addressCountry as страна, addressRegion as область, addressArea as Район, addressCity as город, addressStreet as улица, addressHome as дом, addressFlat as квартира, " +
+                             "qualificationLevel as КвалификацилнныйУровень, trainingDirection as НаправленностьПодготовки , profile as Профиль, yearIssue as ГодВыпуска, " +
+                             "nameStateOrg as ГосОрганизация, nameOrg as НазваниеОрганизации, post as должность, freeWorker as СвободаВыбора, numCertificate as Справка1, numReference as Справка2, verificationArrival as ПравоСамУстройства, commentary as ДопИнфа " +
+                         "FROM persons WHERE trainingDirection LIKE '" + "%" + mTextB_Search.Text + "%" + "';", connectionString);
+                        ds = new DataSet();
+                        adapter.Fill(ds);
+                        dgv_persons.DataSource = ds.Tables[0];
+                        dgv_persons.Columns[0].Visible = false; // Скрыть id
+                        connection.Close();
+                    }
+                    if (mRadio_sBirthday.Checked == true)
+                    {
+                        connection.Open();
+                        SqlDataAdapter adapter = new SqlDataAdapter("SELECT id as num,surname as Фамилия,name as Имя, patronymic as Отчество, gender as пол, birthday as деньРождение," +
+                             "addressCountry as страна, addressRegion as область, addressArea as Район, addressCity as город, addressStreet as улица, addressHome as дом, addressFlat as квартира, " +
+                             "qualificationLevel as КвалификацилнныйУровень, trainingDirection as НаправленностьПодготовки , profile as Профиль, yearIssue as ГодВыпуска, " +
+                             "nameStateOrg as ГосОрганизация, nameOrg as НазваниеОрганизации, post as должность, freeWorker as СвободаВыбора, numCertificate as Справка1, numReference as Справка2, verificationArrival as ПравоСамУстройства, commentary as ДопИнфа " +
+                         "FROM persons WHERE birthday LIKE '" + "%" + mTextB_Search.Text + "%" + "';", connectionString);
+                        ds = new DataSet();
+                        adapter.Fill(ds);
+                        dgv_persons.DataSource = ds.Tables[0];
+                        dgv_persons.Columns[0].Visible = false; // Скрыть id
+                        connection.Close();
+                    }
+                }
+            }
+            catch (Exception ex) { MessageBox.Show(ex.Message.ToString()); }
+            finally
+            {
+                if (sqlReader != null)
+                    sqlReader.Close();
+            }
+        }
+        #endregion
+
+        #region Выбор 1 RadioButton из 8
+        private void MRadio_sSurname_CheckedChanged(object sender, EventArgs e)
+        {
+            RadioButton radio = (RadioButton)sender;
+            if (radio.Checked)
+            {
+                switch (radio.Name)
+                {
+                    case "mRadio_sSurname":
+                        /*
+                        mTextB_sSurname.Enabled = true; // Фасмлия
+                        mTextB_sNumOrg.Enabled = false; // название организации
+                        mTextB_sFreeWork.Enabled = false; // Право свободного трудоустройства
+                        mTextB_sGender.Enabled = false; // Пол
+                        mTextB_sPost.Enabled = false; // Должность
+                        mTextB_sYearIssue.Enabled = false; // Год выпуска
+                        mTextB_sTrainingDirection.Enabled = false; // Специальность
+                        mTextB_sBirthday.Enabled = false; // ДР
+                        */
+                        break;
+                        
+
+                    case "mRadio_sNumOrg":
+                        break;
+
+                    case "mRadio_sFreeWork":
+                        break;
+
+                    case "mRadio_sGender":
+                        break;
+
+                    case "mRadio_sPost":
+                        break;
+                    case "mRadio_sYearIssue":
+                        break;
+                    case "mRadio_sTrainingDirection":
+                        break;
+                    case "mRadio_sBirthday":
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        #endregion
+
+    }
+}

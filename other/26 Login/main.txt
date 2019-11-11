@@ -1,0 +1,1039 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using MetroFramework.Forms;
+using System.IO;
+using System.Reflection;
+using Excel = Microsoft.Office.Interop.Excel;
+using Graduate.databse;
+namespace Graduate
+{
+    public partial class f_main : MetroForm
+    {
+        public f_main() { InitializeComponent(); }
+        public int idUser = 0;
+        public string userRole = "";
+        public string userPin = "";
+        public string projFullName = "";
+        //UserLogs ul = new UserLogs();
+
+        private bool CheckUser(string chpwd)
+        {
+            bool check = false;
+            try
+            {
+                string hashPassDb = "";
+                using (DataBase db = new DataBase())
+                {
+                    usersRole ur = db.usersRole.FirstOrDefault(p => p.idUser == idUser);
+                    if (ur == null)
+                    {
+                        MessageBox.Show("У данного пользователя нет прав для работы с данной программой!111111111");
+                    }
+                    else
+                    {
+                        hashPassDb = ur.users.pin;
+                        if (hashPassDb == chpwd)
+                        {
+                            check = true;
+                            userRole = ur.role.name;
+                            userPin = ur.users.pin;
+                            db.SaveChanges();
+                        }
+                        else
+                        {
+                            check = false;
+                            MessageBox.Show("Неверно введен логин или пароль!");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            return check;
+        }
+
+        //--------------Двойнная  буфферизация--------------
+        void Optim(DataGridView dgv, bool setting)
+        {
+            Type dgvType = dgv.GetType();
+            PropertyInfo pi = dgvType.GetProperty("DoubleBuffered",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+            pi.SetValue(dgv, setting, null);
+            dgv.SuspendLayout();
+        }
+
+
+        #region 2Клик по таблице, открывает личную карту с информацие о выбранном студенте
+        private void Dgv_persons_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            try
+            {
+                new f_personalCards(idUser, (int)dgv_persons["id", e.RowIndex].Value).ShowDialog();
+            }
+            catch (Exception ex) { MessageBox.Show(ex.Message); }
+        }
+        #endregion
+
+        #region DELETE Правый клик по таблице вызывает Контексное меню - удалить
+
+        // контесное меню таблицы
+        private void Dgv_persons_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == System.Windows.Forms.MouseButtons.Right) { contextDVG.Show(Cursor.Position.X, Cursor.Position.Y); }
+            //int idPers = 0;
+        }
+        int id = 0;
+        void item_Click(object sender, EventArgs e)
+        {
+           // ToolStripItem clickedItem = sender as ToolStripItem;
+            // your code here
+            using(databse.DataBase db = new databse.DataBase())
+            {
+                var Result = MessageBox.Show("Вы уверены что хотите удалить данную запись?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                databse.persons pers = db.persons.FirstOrDefault(obj => obj.id == id);
+
+                if(Result == DialogResult.Yes)
+                {
+                    db.persons.Remove(pers);
+                    db.SaveChanges();
+                    MessageBox.Show("Запись удалена");
+                }
+            }
+        }
+
+        // Выделить строку персоны
+        private void Dgv_persons_CellMouseDown(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                try
+                {
+                    dgv_persons.CurrentCell = dgv_persons.Rows[e.RowIndex].Cells[e.ColumnIndex];
+                    dgv_persons.Rows[e.RowIndex].Selected = true;
+                    dgv_persons.Focus();
+                    id = (int)dgv_persons["id", e.RowIndex].Value;
+
+                    ToolStripItem item = contextDVG.Items.Add("Удалить");
+                    item.Click += new EventHandler(item_Click);
+
+                }
+                catch (Exception ex) { MessageBox.Show(ex.Message.ToString()); }
+            }
+        }
+        #endregion
+
+        #region Фильтр поиска
+        private void MButSerch_Click(object sender, EventArgs e)
+        {
+            using (databse.DataBase db = new databse.DataBase())
+            {
+                Optim(dgv_persons, true);
+                if (mRadio_Surname.Checked == true)
+                {
+                    dgv_persons.Columns.Clear();
+                    dgv_persons.Rows.Clear();
+                    var ser = db.persToWork.Where(obj => mTextB_Search.Text.Contains(obj.persons.surname)).ToList();
+                    dgv_persons.Columns.Add("id", "id"); // 0
+                    dgv_persons.Columns.Add("surname", "Фамлия"); // 1
+                    dgv_persons.Columns.Add("name", "Имя"); // 2
+                    dgv_persons.Columns.Add("patronymic", "Отчество"); //  3
+                    dgv_persons.Columns.Add("birthday", "дата рождения"); // 4
+                    dgv_persons.Columns.Add("gender", "пол"); // 5
+
+                    dgv_persons.Columns.Add("addressCountry", "Государство"); // 6
+                    dgv_persons.Columns.Add("addressRegion", "Область"); // 7
+                    dgv_persons.Columns.Add("addressArea", "Район"); // 8
+                    dgv_persons.Columns.Add("addressCity", "Населенный пункт"); // 9
+                    dgv_persons.Columns.Add("addressStreet", "Улица"); // 10
+                    dgv_persons.Columns.Add("addressHome", "дом"); // 11
+                    dgv_persons.Columns.Add("addressFlat", "квартира"); // 12
+
+                    dgv_persons.Columns.Add("nameQualification", "квалификацыонный уровень"); // 13
+                    dgv_persons.Columns.Add("trainingDirection", "направленность подготовки"); // 14
+                    dgv_persons.Columns.Add("profile", "профиль"); // 15
+                    dgv_persons.Columns.Add("yeatIssue", "год выпуска"); // 16
+
+                    dgv_persons.Columns.Add("nameStateOrg", "Название государственной организации"); // 17
+                    dgv_persons.Columns.Add("nameOrg", "Название организации"); // 18
+                    dgv_persons.Columns.Add("post", "должность"); // 19
+                    dgv_persons.Columns.Add("nameFreeWork", "самостоятельное трудоустройство"); // 20
+                    dgv_persons.Columns.Add("numCertificate", "№ свидетельства"); // 21
+                    dgv_persons.Columns.Add("numReference", "№ справки"); // 22
+                    dgv_persons.Columns.Add("verificationArrival", "Подтверждение прибытия"); // 23
+                    dgv_persons.Columns.Add("commentary", "дополнительная информация"); // 24
+                    dgv_persons.Columns[0].Visible = false; // id не видим
+                    int i = 0;
+
+                    if (ser.Count() > 0)
+                    {
+                        dgv_persons.Rows.Add(ser.Count());
+                        foreach (databse.persToWork pTW in ser) // Заполнение таблицы 
+                        {
+                            dgv_persons[0, i].Value = pTW.persons.id;
+                            dgv_persons[1, i].Value = pTW.persons.surname;
+                            dgv_persons[2, i].Value = pTW.persons.name;
+                            dgv_persons[3, i].Value = pTW.persons.patronymic;
+                            dgv_persons[4, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); // longDate для месяца
+                            dgv_persons[5, i].Value = pTW.persons.gender;
+
+                            dgv_persons[6, i].Value = pTW.persons.addressCountry;
+                            dgv_persons[7, i].Value = pTW.persons.addressRegion;
+                            dgv_persons[8, i].Value = pTW.persons.addressArea;
+                            dgv_persons[9, i].Value = pTW.persons.addressCity;
+                            dgv_persons[10, i].Value = pTW.persons.addressStreet;
+                            dgv_persons[11, i].Value = pTW.persons.addressHome;
+                            dgv_persons[12, i].Value = pTW.persons.addressFlat;
+
+                            dgv_persons[13, i].Value = pTW.persons.typeQualification.nameQualification;
+                            dgv_persons[14, i].Value = pTW.persons.trainingDirection;
+                            dgv_persons[15, i].Value = pTW.persons.profile;
+                            dgv_persons[16, i].Value = pTW.persons.yeatIssue;
+
+                            dgv_persons[17, i].Value = pTW.nameStateOrg;
+                            dgv_persons[18, i].Value = pTW.nameOrg;
+                            dgv_persons[19, i].Value = pTW.post;
+                            dgv_persons[20, i].Value = pTW.freeWork.nameFreeWork;
+                            dgv_persons[21, i].Value = pTW.numCertificate;
+                            dgv_persons[22, i].Value = pTW.numReference;
+                            dgv_persons[23, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
+                            dgv_persons[24, i].Value = pTW.commentary;
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Человека с такой Фамилией нет");
+                        mTextB_Search.Text = "";
+                    }
+                }
+                if (mRadio_Birthday.Checked == true)
+                {
+                    dgv_persons.Columns.Clear();
+                    dgv_persons.Rows.Clear();
+                    var ser = db.persToWork.Where(obj => mTextB_Search.Text.Contains(obj.persons.birthday.Value.Year.ToString())).ToList();
+                    dgv_persons.Columns.Add("id", "id"); // 0
+                    dgv_persons.Columns.Add("surname", "Фамлия"); // 1
+                    dgv_persons.Columns.Add("name", "Имя"); // 2
+                    dgv_persons.Columns.Add("patronymic", "Отчество"); //  3
+                    dgv_persons.Columns.Add("birthday", "дата рождения"); // 4
+                    dgv_persons.Columns.Add("gender", "пол"); // 5
+
+                    dgv_persons.Columns.Add("addressCountry", "Государство"); // 6
+                    dgv_persons.Columns.Add("addressRegion", "Область"); // 7
+                    dgv_persons.Columns.Add("addressArea", "Район"); // 8
+                    dgv_persons.Columns.Add("addressCity", "Населенный пункт"); // 9
+                    dgv_persons.Columns.Add("addressStreet", "Улица"); // 10
+                    dgv_persons.Columns.Add("addressHome", "дом"); // 11
+                    dgv_persons.Columns.Add("addressFlat", "квартира"); // 12
+
+                    dgv_persons.Columns.Add("nameQualification", "квалификацыонный уровень"); // 13
+                    dgv_persons.Columns.Add("trainingDirection", "направленность подготовки"); // 14
+                    dgv_persons.Columns.Add("profile", "профиль"); // 15
+                    dgv_persons.Columns.Add("yeatIssue", "год выпуска"); // 16
+
+                    dgv_persons.Columns.Add("nameStateOrg", "Название государственной организации"); // 17
+                    dgv_persons.Columns.Add("nameOrg", "Название организации"); // 18
+                    dgv_persons.Columns.Add("post", "должность"); // 19
+                    dgv_persons.Columns.Add("nameFreeWork", "самостоятельное трудоустройство"); // 20
+                    dgv_persons.Columns.Add("numCertificate", "№ свидетельства"); // 21
+                    dgv_persons.Columns.Add("numReference", "№ справки"); // 22
+                    dgv_persons.Columns.Add("verificationArrival", "Подтверждение прибытия"); // 23
+                    dgv_persons.Columns.Add("commentary", "дополнительная информация"); // 24
+                    dgv_persons.Columns[0].Visible = false; // id не видим
+                    int i = 0;
+
+                    if (ser.Count() > 0)
+                    {
+                        dgv_persons.Rows.Add(ser.Count());
+                        foreach (databse.persToWork pTW in ser) // Заполнение таблицы 
+                        {
+                            dgv_persons[0, i].Value = pTW.persons.id;
+                            dgv_persons[1, i].Value = pTW.persons.surname;
+                            dgv_persons[2, i].Value = pTW.persons.name;
+                            dgv_persons[3, i].Value = pTW.persons.patronymic;
+                            dgv_persons[4, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); ;
+                            dgv_persons[5, i].Value = pTW.persons.gender;
+
+                            dgv_persons[6, i].Value = pTW.persons.addressCountry;
+                            dgv_persons[7, i].Value = pTW.persons.addressRegion;
+                            dgv_persons[8, i].Value = pTW.persons.addressArea;
+                            dgv_persons[9, i].Value = pTW.persons.addressCity;
+                            dgv_persons[10, i].Value = pTW.persons.addressStreet;
+                            dgv_persons[11, i].Value = pTW.persons.addressHome;
+                            dgv_persons[12, i].Value = pTW.persons.addressFlat;
+
+                            dgv_persons[13, i].Value = pTW.persons.typeQualification.nameQualification;
+                            dgv_persons[14, i].Value = pTW.persons.trainingDirection;
+                            dgv_persons[15, i].Value = pTW.persons.profile;
+                            dgv_persons[16, i].Value = pTW.persons.yeatIssue;
+
+                            dgv_persons[17, i].Value = pTW.nameStateOrg;
+                            dgv_persons[18, i].Value = pTW.nameOrg;
+                            dgv_persons[19, i].Value = pTW.post;
+                            dgv_persons[20, i].Value = pTW.freeWork.nameFreeWork;
+                            dgv_persons[21, i].Value = pTW.numCertificate;
+                            dgv_persons[22, i].Value = pTW.numReference;
+                            dgv_persons[23, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
+                            dgv_persons[24, i].Value = pTW.commentary;
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Человека с такой датой нет");
+                        mTextB_Search.Text = "";
+                    }
+                }
+
+                if (mRadio_qualification.Checked == true)
+                {
+                    dgv_persons.Columns.Clear();
+                    dgv_persons.Rows.Clear();
+                    var ser = db.persToWork.Where(obj => mTextB_Search.Text.Contains(obj.persons.typeQualification.nameQualification)).ToList();
+                    dgv_persons.Columns.Add("id", "id"); // 0
+                    dgv_persons.Columns.Add("surname", "Фамлия"); // 1
+                    dgv_persons.Columns.Add("name", "Имя"); // 2
+                    dgv_persons.Columns.Add("patronymic", "Отчество"); //  3
+                    dgv_persons.Columns.Add("birthday", "дата рождения"); // 4
+                    dgv_persons.Columns.Add("gender", "пол"); // 5
+
+                    dgv_persons.Columns.Add("addressCountry", "Государство"); // 6
+                    dgv_persons.Columns.Add("addressRegion", "Область"); // 7
+                    dgv_persons.Columns.Add("addressArea", "Район"); // 8
+                    dgv_persons.Columns.Add("addressCity", "Населенный пункт"); // 9
+                    dgv_persons.Columns.Add("addressStreet", "Улица"); // 10
+                    dgv_persons.Columns.Add("addressHome", "дом"); // 11
+                    dgv_persons.Columns.Add("addressFlat", "квартира"); // 12
+
+                    dgv_persons.Columns.Add("nameQualification", "квалификацыонный уровень"); // 13
+                    dgv_persons.Columns.Add("trainingDirection", "направленность подготовки"); // 14
+                    dgv_persons.Columns.Add("profile", "профиль"); // 15
+                    dgv_persons.Columns.Add("yeatIssue", "год выпуска"); // 16
+
+                    dgv_persons.Columns.Add("nameStateOrg", "Название государственной организации"); // 17
+                    dgv_persons.Columns.Add("nameOrg", "Название организации"); // 18
+                    dgv_persons.Columns.Add("post", "должность"); // 19
+                    dgv_persons.Columns.Add("nameFreeWork", "самостоятельное трудоустройство"); // 20
+                    dgv_persons.Columns.Add("numCertificate", "№ свидетельства"); // 21
+                    dgv_persons.Columns.Add("numReference", "№ справки"); // 22
+                    dgv_persons.Columns.Add("verificationArrival", "Подтверждение прибытия"); // 23
+                    dgv_persons.Columns.Add("commentary", "дополнительная информация"); // 24
+                    dgv_persons.Columns[0].Visible = false; // id не видим
+                    int i = 0;
+
+                    if (ser.Count() > 0)
+                    {
+                        dgv_persons.Rows.Add(ser.Count());
+                        foreach (databse.persToWork pTW in ser) // Заполнение таблицы 
+                        {
+                            dgv_persons[0, i].Value = pTW.persons.id;
+                            dgv_persons[1, i].Value = pTW.persons.surname;
+                            dgv_persons[2, i].Value = pTW.persons.name;
+                            dgv_persons[3, i].Value = pTW.persons.patronymic;
+                            dgv_persons[4, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); ;
+                            dgv_persons[5, i].Value = pTW.persons.gender;
+
+                            dgv_persons[6, i].Value = pTW.persons.addressCountry;
+                            dgv_persons[7, i].Value = pTW.persons.addressRegion;
+                            dgv_persons[8, i].Value = pTW.persons.addressArea;
+                            dgv_persons[9, i].Value = pTW.persons.addressCity;
+                            dgv_persons[10, i].Value = pTW.persons.addressStreet;
+                            dgv_persons[11, i].Value = pTW.persons.addressHome;
+                            dgv_persons[12, i].Value = pTW.persons.addressFlat;
+
+                            dgv_persons[13, i].Value = pTW.persons.typeQualification.nameQualification;
+                            dgv_persons[14, i].Value = pTW.persons.trainingDirection;
+                            dgv_persons[15, i].Value = pTW.persons.profile;
+                            dgv_persons[16, i].Value = pTW.persons.yeatIssue;
+
+                            dgv_persons[17, i].Value = pTW.nameStateOrg;
+                            dgv_persons[18, i].Value = pTW.nameOrg;
+                            dgv_persons[19, i].Value = pTW.post;
+                            dgv_persons[20, i].Value = pTW.freeWork.nameFreeWork;
+                            dgv_persons[21, i].Value = pTW.numCertificate;
+                            dgv_persons[22, i].Value = pTW.numReference;
+                            dgv_persons[23, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
+                            dgv_persons[24, i].Value = pTW.commentary;
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Человека с такой датой нет");
+                        mTextB_Search.Text = "";
+                    }
+                }
+
+                if (mRadio_TrainingDirection.Checked == true)
+                {
+                    dgv_persons.Columns.Clear();
+                    dgv_persons.Rows.Clear();
+                    var ser = db.persToWork.Where(obj => mTextB_Search.Text.Contains(obj.persons.trainingDirection)).ToList();
+                    dgv_persons.Columns.Add("id", "id"); // 0
+                    dgv_persons.Columns.Add("surname", "Фамлия"); // 1
+                    dgv_persons.Columns.Add("name", "Имя"); // 2
+                    dgv_persons.Columns.Add("patronymic", "Отчество"); //  3
+                    dgv_persons.Columns.Add("birthday", "дата рождения"); // 4
+                    dgv_persons.Columns.Add("gender", "пол"); // 5
+
+                    dgv_persons.Columns.Add("addressCountry", "Государство"); // 6
+                    dgv_persons.Columns.Add("addressRegion", "Область"); // 7
+                    dgv_persons.Columns.Add("addressArea", "Район"); // 8
+                    dgv_persons.Columns.Add("addressCity", "Населенный пункт"); // 9
+                    dgv_persons.Columns.Add("addressStreet", "Улица"); // 10
+                    dgv_persons.Columns.Add("addressHome", "дом"); // 11
+                    dgv_persons.Columns.Add("addressFlat", "квартира"); // 12
+
+                    dgv_persons.Columns.Add("nameQualification", "квалификацыонный уровень"); // 13
+                    dgv_persons.Columns.Add("trainingDirection", "направленность подготовки"); // 14
+                    dgv_persons.Columns.Add("profile", "профиль"); // 15
+                    dgv_persons.Columns.Add("yeatIssue", "год выпуска"); // 16
+
+                    dgv_persons.Columns.Add("nameStateOrg", "Название государственной организации"); // 17
+                    dgv_persons.Columns.Add("nameOrg", "Название организации"); // 18
+                    dgv_persons.Columns.Add("post", "должность"); // 19
+                    dgv_persons.Columns.Add("nameFreeWork", "самостоятельное трудоустройство"); // 20
+                    dgv_persons.Columns.Add("numCertificate", "№ свидетельства"); // 21
+                    dgv_persons.Columns.Add("numReference", "№ справки"); // 22
+                    dgv_persons.Columns.Add("verificationArrival", "Подтверждение прибытия"); // 23
+                    dgv_persons.Columns.Add("commentary", "дополнительная информация"); // 24
+                    dgv_persons.Columns[0].Visible = false; // id не видим
+                    int i = 0;
+
+                    if (ser.Count() > 0)
+                    {
+                        dgv_persons.Rows.Add(ser.Count());
+                        foreach (databse.persToWork pTW in ser) // Заполнение таблицы 
+                        {
+                            dgv_persons[0, i].Value = pTW.persons.id;
+                            dgv_persons[1, i].Value = pTW.persons.surname;
+                            dgv_persons[2, i].Value = pTW.persons.name;
+                            dgv_persons[3, i].Value = pTW.persons.patronymic;
+                            dgv_persons[4, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); ;
+                            dgv_persons[5, i].Value = pTW.persons.gender;
+
+                            dgv_persons[6, i].Value = pTW.persons.addressCountry;
+                            dgv_persons[7, i].Value = pTW.persons.addressRegion;
+                            dgv_persons[8, i].Value = pTW.persons.addressArea;
+                            dgv_persons[9, i].Value = pTW.persons.addressCity;
+                            dgv_persons[10, i].Value = pTW.persons.addressStreet;
+                            dgv_persons[11, i].Value = pTW.persons.addressHome;
+                            dgv_persons[12, i].Value = pTW.persons.addressFlat;
+
+                            dgv_persons[13, i].Value = pTW.persons.typeQualification.nameQualification;
+                            dgv_persons[14, i].Value = pTW.persons.trainingDirection;
+                            dgv_persons[15, i].Value = pTW.persons.profile;
+                            dgv_persons[16, i].Value = pTW.persons.yeatIssue;
+
+                            dgv_persons[17, i].Value = pTW.nameStateOrg;
+                            dgv_persons[18, i].Value = pTW.nameOrg;
+                            dgv_persons[19, i].Value = pTW.post;
+                            dgv_persons[20, i].Value = pTW.freeWork.nameFreeWork;
+                            dgv_persons[21, i].Value = pTW.numCertificate;
+                            dgv_persons[22, i].Value = pTW.numReference;
+                            dgv_persons[23, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
+                            dgv_persons[24, i].Value = pTW.commentary;
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Человека с такой датой нет");
+                        mTextB_Search.Text = "";
+                    }
+                }
+                if (mRadio_YearIssue.Checked == true)
+                {
+                    dgv_persons.Columns.Clear();
+                    dgv_persons.Rows.Clear();
+                    var ser = db.persToWork.Where(obj => mTextB_Search.Text.Contains(obj.persons.yeatIssue.Value.ToString())).ToList();
+                    dgv_persons.Columns.Add("id", "id"); // 0
+                    dgv_persons.Columns.Add("surname", "Фамлия"); // 1
+                    dgv_persons.Columns.Add("name", "Имя"); // 2
+                    dgv_persons.Columns.Add("patronymic", "Отчество"); //  3
+                    dgv_persons.Columns.Add("birthday", "дата рождения"); // 4
+                    dgv_persons.Columns.Add("gender", "пол"); // 5
+
+                    dgv_persons.Columns.Add("addressCountry", "Государство"); // 6
+                    dgv_persons.Columns.Add("addressRegion", "Область"); // 7
+                    dgv_persons.Columns.Add("addressArea", "Район"); // 8
+                    dgv_persons.Columns.Add("addressCity", "Населенный пункт"); // 9
+                    dgv_persons.Columns.Add("addressStreet", "Улица"); // 10
+                    dgv_persons.Columns.Add("addressHome", "дом"); // 11
+                    dgv_persons.Columns.Add("addressFlat", "квартира"); // 12
+
+                    dgv_persons.Columns.Add("nameQualification", "квалификацыонный уровень"); // 13
+                    dgv_persons.Columns.Add("trainingDirection", "направленность подготовки"); // 14
+                    dgv_persons.Columns.Add("profile", "профиль"); // 15
+                    dgv_persons.Columns.Add("yeatIssue", "год выпуска"); // 16
+
+                    dgv_persons.Columns.Add("nameStateOrg", "Название государственной организации"); // 17
+                    dgv_persons.Columns.Add("nameOrg", "Название организации"); // 18
+                    dgv_persons.Columns.Add("post", "должность"); // 19
+                    dgv_persons.Columns.Add("nameFreeWork", "самостоятельное трудоустройство"); // 20
+                    dgv_persons.Columns.Add("numCertificate", "№ свидетельства"); // 21
+                    dgv_persons.Columns.Add("numReference", "№ справки"); // 22
+                    dgv_persons.Columns.Add("verificationArrival", "Подтверждение прибытия"); // 23
+                    dgv_persons.Columns.Add("commentary", "дополнительная информация"); // 24
+                    dgv_persons.Columns[0].Visible = false; // id не видим
+                    int i = 0;
+
+                    if (ser.Count() > 0)
+                    {
+                        dgv_persons.Rows.Add(ser.Count());
+                        foreach (databse.persToWork pTW in ser) // Заполнение таблицы 
+                        {
+                            dgv_persons[0, i].Value = pTW.persons.id;
+                            dgv_persons[1, i].Value = pTW.persons.surname;
+                            dgv_persons[2, i].Value = pTW.persons.name;
+                            dgv_persons[3, i].Value = pTW.persons.patronymic;
+                            dgv_persons[4, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); ;
+                            dgv_persons[5, i].Value = pTW.persons.gender;
+
+                            dgv_persons[6, i].Value = pTW.persons.addressCountry;
+                            dgv_persons[7, i].Value = pTW.persons.addressRegion;
+                            dgv_persons[8, i].Value = pTW.persons.addressArea;
+                            dgv_persons[9, i].Value = pTW.persons.addressCity;
+                            dgv_persons[10, i].Value = pTW.persons.addressStreet;
+                            dgv_persons[11, i].Value = pTW.persons.addressHome;
+                            dgv_persons[12, i].Value = pTW.persons.addressFlat;
+
+                            dgv_persons[13, i].Value = pTW.persons.typeQualification.nameQualification;
+                            dgv_persons[14, i].Value = pTW.persons.trainingDirection;
+                            dgv_persons[15, i].Value = pTW.persons.profile;
+                            dgv_persons[16, i].Value = pTW.persons.yeatIssue;
+
+                            dgv_persons[17, i].Value = pTW.nameStateOrg;
+                            dgv_persons[18, i].Value = pTW.nameOrg;
+                            dgv_persons[19, i].Value = pTW.post;
+                            dgv_persons[20, i].Value = pTW.freeWork.nameFreeWork;
+                            dgv_persons[21, i].Value = pTW.numCertificate;
+                            dgv_persons[22, i].Value = pTW.numReference;
+                            dgv_persons[23, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
+                            dgv_persons[24, i].Value = pTW.commentary;
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("В этом году нет выпускников");
+                        mTextB_Search.Text = "";
+                    }
+                }
+
+                if (mRadio_profile.Checked == true)
+                {
+                    dgv_persons.Columns.Clear();
+                    dgv_persons.Rows.Clear();
+                    var ser = db.persToWork.Where(obj => mTextB_Search.Text.Contains(obj.persons.profile)).ToList();
+                    dgv_persons.Columns.Add("id", "id"); // 0
+                    dgv_persons.Columns.Add("surname", "Фамлия"); // 1
+                    dgv_persons.Columns.Add("name", "Имя"); // 2
+                    dgv_persons.Columns.Add("patronymic", "Отчество"); //  3
+                    dgv_persons.Columns.Add("birthday", "дата рождения"); // 4
+                    dgv_persons.Columns.Add("gender", "пол"); // 5
+
+                    dgv_persons.Columns.Add("addressCountry", "Государство"); // 6
+                    dgv_persons.Columns.Add("addressRegion", "Область"); // 7
+                    dgv_persons.Columns.Add("addressArea", "Район"); // 8
+                    dgv_persons.Columns.Add("addressCity", "Населенный пункт"); // 9
+                    dgv_persons.Columns.Add("addressStreet", "Улица"); // 10
+                    dgv_persons.Columns.Add("addressHome", "дом"); // 11
+                    dgv_persons.Columns.Add("addressFlat", "квартира"); // 12
+
+                    dgv_persons.Columns.Add("nameQualification", "квалификацыонный уровень"); // 13
+                    dgv_persons.Columns.Add("trainingDirection", "направленность подготовки"); // 14
+                    dgv_persons.Columns.Add("profile", "профиль"); // 15
+                    dgv_persons.Columns.Add("yeatIssue", "год выпуска"); // 16
+
+                    dgv_persons.Columns.Add("nameStateOrg", "Название государственной организации"); // 17
+                    dgv_persons.Columns.Add("nameOrg", "Название организации"); // 18
+                    dgv_persons.Columns.Add("post", "должность"); // 19
+                    dgv_persons.Columns.Add("nameFreeWork", "самостоятельное трудоустройство"); // 20
+                    dgv_persons.Columns.Add("numCertificate", "№ свидетельства"); // 21
+                    dgv_persons.Columns.Add("numReference", "№ справки"); // 22
+                    dgv_persons.Columns.Add("verificationArrival", "Подтверждение прибытия"); // 23
+                    dgv_persons.Columns.Add("commentary", "дополнительная информация"); // 24
+                    dgv_persons.Columns[0].Visible = false; // id не видим
+                    int i = 0;
+
+                    if (ser.Count() > 0)
+                    {
+                        dgv_persons.Rows.Add(ser.Count());
+                        foreach (databse.persToWork pTW in ser) // Заполнение таблицы 
+                        {
+                            dgv_persons[0, i].Value = pTW.persons.id;
+                            dgv_persons[1, i].Value = pTW.persons.surname;
+                            dgv_persons[2, i].Value = pTW.persons.name;
+                            dgv_persons[3, i].Value = pTW.persons.patronymic;
+                            dgv_persons[4, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); ;
+                            dgv_persons[5, i].Value = pTW.persons.gender;
+
+                            dgv_persons[6, i].Value = pTW.persons.addressCountry;
+                            dgv_persons[7, i].Value = pTW.persons.addressRegion;
+                            dgv_persons[8, i].Value = pTW.persons.addressArea;
+                            dgv_persons[9, i].Value = pTW.persons.addressCity;
+                            dgv_persons[10, i].Value = pTW.persons.addressStreet;
+                            dgv_persons[11, i].Value = pTW.persons.addressHome;
+                            dgv_persons[12, i].Value = pTW.persons.addressFlat;
+
+                            dgv_persons[13, i].Value = pTW.persons.typeQualification.nameQualification;
+                            dgv_persons[14, i].Value = pTW.persons.trainingDirection;
+                            dgv_persons[15, i].Value = pTW.persons.profile;
+                            dgv_persons[16, i].Value = pTW.persons.yeatIssue;
+
+                            dgv_persons[17, i].Value = pTW.nameStateOrg;
+                            dgv_persons[18, i].Value = pTW.nameOrg;
+                            dgv_persons[19, i].Value = pTW.post;
+                            dgv_persons[20, i].Value = pTW.freeWork.nameFreeWork;
+                            dgv_persons[21, i].Value = pTW.numCertificate;
+                            dgv_persons[22, i].Value = pTW.numReference;
+                            dgv_persons[23, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
+                            dgv_persons[24, i].Value = pTW.commentary;
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Человека с таким профилем нет");
+                        mTextB_Search.Text = "";
+                    }
+                }
+                if (mRadio_FreeWork.Checked == true)
+                {
+                    dgv_persons.Columns.Clear();
+                    dgv_persons.Rows.Clear();
+                    var ser = db.persToWork.Where(obj => mTextB_Search.Text.Contains(obj.freeWork.nameFreeWork)).ToList();
+                    dgv_persons.Columns.Add("id", "id"); // 0
+                    dgv_persons.Columns.Add("surname", "Фамлия"); // 1
+                    dgv_persons.Columns.Add("name", "Имя"); // 2
+                    dgv_persons.Columns.Add("patronymic", "Отчество"); //  3
+                    dgv_persons.Columns.Add("birthday", "дата рождения"); // 4
+                    dgv_persons.Columns.Add("gender", "пол"); // 5
+
+                    dgv_persons.Columns.Add("addressCountry", "Государство"); // 6
+                    dgv_persons.Columns.Add("addressRegion", "Область"); // 7
+                    dgv_persons.Columns.Add("addressArea", "Район"); // 8
+                    dgv_persons.Columns.Add("addressCity", "Населенный пункт"); // 9
+                    dgv_persons.Columns.Add("addressStreet", "Улица"); // 10
+                    dgv_persons.Columns.Add("addressHome", "дом"); // 11
+                    dgv_persons.Columns.Add("addressFlat", "квартира"); // 12
+
+                    dgv_persons.Columns.Add("nameQualification", "квалификацыонный уровень"); // 13
+                    dgv_persons.Columns.Add("trainingDirection", "направленность подготовки"); // 14
+                    dgv_persons.Columns.Add("profile", "профиль"); // 15
+                    dgv_persons.Columns.Add("yeatIssue", "год выпуска"); // 16
+
+                    dgv_persons.Columns.Add("nameStateOrg", "Название государственной организации"); // 17
+                    dgv_persons.Columns.Add("nameOrg", "Название организации"); // 18
+                    dgv_persons.Columns.Add("post", "должность"); // 19
+                    dgv_persons.Columns.Add("nameFreeWork", "самостоятельное трудоустройство"); // 20
+                    dgv_persons.Columns.Add("numCertificate", "№ свидетельства"); // 21
+                    dgv_persons.Columns.Add("numReference", "№ справки"); // 22
+                    dgv_persons.Columns.Add("verificationArrival", "Подтверждение прибытия"); // 23
+                    dgv_persons.Columns.Add("commentary", "дополнительная информация"); // 24
+                    dgv_persons.Columns[0].Visible = false; // id не видим
+                    int i = 0;
+
+                    if (ser.Count() > 0)
+                    {
+                        dgv_persons.Rows.Add(ser.Count());
+                        foreach (databse.persToWork pTW in ser) // Заполнение таблицы 
+                        {
+                            dgv_persons[0, i].Value = pTW.persons.id;
+                            dgv_persons[1, i].Value = pTW.persons.surname;
+                            dgv_persons[2, i].Value = pTW.persons.name;
+                            dgv_persons[3, i].Value = pTW.persons.patronymic;
+                            dgv_persons[4, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); ;
+                            dgv_persons[5, i].Value = pTW.persons.gender;
+
+                            dgv_persons[6, i].Value = pTW.persons.addressCountry;
+                            dgv_persons[7, i].Value = pTW.persons.addressRegion;
+                            dgv_persons[8, i].Value = pTW.persons.addressArea;
+                            dgv_persons[9, i].Value = pTW.persons.addressCity;
+                            dgv_persons[10, i].Value = pTW.persons.addressStreet;
+                            dgv_persons[11, i].Value = pTW.persons.addressHome;
+                            dgv_persons[12, i].Value = pTW.persons.addressFlat;
+
+                            dgv_persons[13, i].Value = pTW.persons.typeQualification.nameQualification;
+                            dgv_persons[14, i].Value = pTW.persons.trainingDirection;
+                            dgv_persons[15, i].Value = pTW.persons.profile;
+                            dgv_persons[16, i].Value = pTW.persons.yeatIssue;
+
+                            dgv_persons[17, i].Value = pTW.nameStateOrg;
+                            dgv_persons[18, i].Value = pTW.nameOrg;
+                            dgv_persons[19, i].Value = pTW.post;
+                            dgv_persons[20, i].Value = pTW.freeWork.nameFreeWork;
+                            dgv_persons[21, i].Value = pTW.numCertificate;
+                            dgv_persons[22, i].Value = pTW.numReference;
+                            dgv_persons[23, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
+                            dgv_persons[24, i].Value = pTW.commentary;
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Человека с таким самоустройством нет");
+                        mTextB_Search.Text = "";
+                    }
+                }
+
+                if (mRadio_gender.Checked == true)
+                {
+                    dgv_persons.Columns.Clear();
+                    dgv_persons.Rows.Clear();
+                    var ser = db.persToWork.Where(obj => mTextB_Search.Text.Contains(obj.persons.gender)).ToList();
+                    dgv_persons.Columns.Add("id", "id"); // 0
+                    dgv_persons.Columns.Add("surname", "Фамлия"); // 1
+                    dgv_persons.Columns.Add("name", "Имя"); // 2
+                    dgv_persons.Columns.Add("patronymic", "Отчество"); //  3
+                    dgv_persons.Columns.Add("birthday", "дата рождения"); // 4
+                    dgv_persons.Columns.Add("gender", "пол"); // 5
+
+                    dgv_persons.Columns.Add("addressCountry", "Государство"); // 6
+                    dgv_persons.Columns.Add("addressRegion", "Область"); // 7
+                    dgv_persons.Columns.Add("addressArea", "Район"); // 8
+                    dgv_persons.Columns.Add("addressCity", "Населенный пункт"); // 9
+                    dgv_persons.Columns.Add("addressStreet", "Улица"); // 10
+                    dgv_persons.Columns.Add("addressHome", "дом"); // 11
+                    dgv_persons.Columns.Add("addressFlat", "квартира"); // 12
+
+                    dgv_persons.Columns.Add("nameQualification", "квалификацыонный уровень"); // 13
+                    dgv_persons.Columns.Add("trainingDirection", "направленность подготовки"); // 14
+                    dgv_persons.Columns.Add("profile", "профиль"); // 15
+                    dgv_persons.Columns.Add("yeatIssue", "год выпуска"); // 16
+
+                    dgv_persons.Columns.Add("nameStateOrg", "Название государственной организации"); // 17
+                    dgv_persons.Columns.Add("nameOrg", "Название организации"); // 18
+                    dgv_persons.Columns.Add("post", "должность"); // 19
+                    dgv_persons.Columns.Add("nameFreeWork", "самостоятельное трудоустройство"); // 20
+                    dgv_persons.Columns.Add("numCertificate", "№ свидетельства"); // 21
+                    dgv_persons.Columns.Add("numReference", "№ справки"); // 22
+                    dgv_persons.Columns.Add("verificationArrival", "Подтверждение прибытия"); // 23
+                    dgv_persons.Columns.Add("commentary", "дополнительная информация"); // 24
+                    dgv_persons.Columns[0].Visible = false; // id не видим
+                    int i = 0;
+
+                    if (ser.Count() > 0)
+                    {
+                        dgv_persons.Rows.Add(ser.Count());
+                        foreach (databse.persToWork pTW in ser) // Заполнение таблицы 
+                        {
+                            // Левый блок
+                            dgv_persons[0, i].Value = pTW.persons.id;
+                            dgv_persons[1, i].Value = pTW.persons.surname;
+                            dgv_persons[2, i].Value = pTW.persons.name;
+                            dgv_persons[3, i].Value = pTW.persons.patronymic;
+                            dgv_persons[4, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); ;
+                            dgv_persons[5, i].Value = pTW.persons.gender;
+
+                            dgv_persons[6, i].Value = pTW.persons.addressCountry;
+                            dgv_persons[7, i].Value = pTW.persons.addressRegion;
+                            dgv_persons[8, i].Value = pTW.persons.addressArea;
+                            dgv_persons[9, i].Value = pTW.persons.addressCity;
+                            dgv_persons[10, i].Value = pTW.persons.addressStreet;
+                            dgv_persons[11, i].Value = pTW.persons.addressHome;
+                            dgv_persons[12, i].Value = pTW.persons.addressFlat;
+
+                            dgv_persons[13, i].Value = pTW.persons.typeQualification.nameQualification;
+                            dgv_persons[14, i].Value = pTW.persons.trainingDirection;
+                            dgv_persons[15, i].Value = pTW.persons.profile;
+                            dgv_persons[16, i].Value = pTW.persons.yeatIssue;
+
+                            dgv_persons[17, i].Value = pTW.nameStateOrg;
+                            dgv_persons[18, i].Value = pTW.nameOrg;
+                            dgv_persons[19, i].Value = pTW.post;
+                            dgv_persons[20, i].Value = pTW.freeWork.nameFreeWork;
+                            dgv_persons[21, i].Value = pTW.numCertificate;
+                            dgv_persons[22, i].Value = pTW.numReference;
+                            dgv_persons[23, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
+                            dgv_persons[24, i].Value = pTW.commentary;
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Человек данного пола отсутсвуют. Правильно вводить 'муж' или 'жен'");
+                        mTextB_Search.Text = "";
+                    }
+                }
+                if (mRadio_all.Checked == true)
+                {
+                    dgv_persons.Columns.Clear();
+                    dgv_persons.Rows.Clear();
+                    var ser = db.persToWork;
+                    dgv_persons.Columns.Add("id", "id"); // 0
+                    dgv_persons.Columns.Add("surname", "Фамлия"); // 1
+                    dgv_persons.Columns.Add("name", "Имя"); // 2
+                    dgv_persons.Columns.Add("patronymic", "Отчество"); //  3
+                    dgv_persons.Columns.Add("birthday", "дата рождения"); // 4
+                    dgv_persons.Columns.Add("gender", "пол"); // 5
+
+                    dgv_persons.Columns.Add("addressCountry", "Государство"); // 6
+                    dgv_persons.Columns.Add("addressRegion", "Область"); // 7
+                    dgv_persons.Columns.Add("addressArea", "Район"); // 8
+                    dgv_persons.Columns.Add("addressCity", "Населенный пункт"); // 9
+                    dgv_persons.Columns.Add("addressStreet", "Улица"); // 10
+                    dgv_persons.Columns.Add("addressHome", "дом"); // 11
+                    dgv_persons.Columns.Add("addressFlat", "квартира"); // 12
+
+                    dgv_persons.Columns.Add("nameQualification", "квалификацыонный уровень"); // 13
+                    dgv_persons.Columns.Add("trainingDirection", "направленность подготовки"); // 14
+                    dgv_persons.Columns.Add("profile", "профиль"); // 15
+                    dgv_persons.Columns.Add("yeatIssue", "год выпуска"); // 16
+
+                    dgv_persons.Columns.Add("nameStateOrg", "Название государственной организации"); // 17
+                    dgv_persons.Columns.Add("nameOrg", "Название организации"); // 18
+                    dgv_persons.Columns.Add("post", "должность"); // 19
+                    dgv_persons.Columns.Add("nameFreeWork", "самостоятельное трудоустройство"); // 20
+                    dgv_persons.Columns.Add("numCertificate", "№ свидетельства"); // 21
+                    dgv_persons.Columns.Add("numReference", "№ справки"); // 22
+                    dgv_persons.Columns.Add("verificationArrival", "Подтверждение прибытия"); // 23
+                    dgv_persons.Columns.Add("commentary", "дополнительная информация"); // 24
+                    dgv_persons.Columns[0].Visible = false; // id не видим
+                    int i = 0;
+
+                    if (ser.Count() > 0)
+                    {
+                        dgv_persons.Rows.Add(ser.Count());
+                        foreach (databse.persToWork pTW in ser) // Заполнение таблицы 
+                        {
+                            dgv_persons[0, i].Value = pTW.persons.id;
+                            dgv_persons[1, i].Value = pTW.persons.surname;
+                            dgv_persons[2, i].Value = pTW.persons.name;
+                            dgv_persons[3, i].Value = pTW.persons.patronymic;
+                            dgv_persons[4, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); ;
+                            dgv_persons[5, i].Value = pTW.persons.gender;
+
+                            dgv_persons[6, i].Value = pTW.persons.addressCountry;
+                            dgv_persons[7, i].Value = pTW.persons.addressRegion;
+                            dgv_persons[8, i].Value = pTW.persons.addressArea;
+                            dgv_persons[9, i].Value = pTW.persons.addressCity;
+                            dgv_persons[10, i].Value = pTW.persons.addressStreet;
+                            dgv_persons[11, i].Value = pTW.persons.addressHome;
+                            dgv_persons[12, i].Value = pTW.persons.addressFlat;
+
+                            dgv_persons[13, i].Value = pTW.persons.typeQualification.nameQualification;
+                            dgv_persons[14, i].Value = pTW.persons.trainingDirection;
+                            dgv_persons[15, i].Value = pTW.persons.profile;
+                            dgv_persons[16, i].Value = pTW.persons.yeatIssue;
+
+                            dgv_persons[17, i].Value = pTW.nameStateOrg;
+                            dgv_persons[18, i].Value = pTW.nameOrg;
+                            dgv_persons[19, i].Value = pTW.post;
+                            dgv_persons[20, i].Value = pTW.freeWork.nameFreeWork;
+                            dgv_persons[21, i].Value = pTW.numCertificate;
+                            dgv_persons[22, i].Value = pTW.numReference;
+                            dgv_persons[23, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
+                            dgv_persons[24, i].Value = pTW.commentary;
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("БД пустая");
+                        mTextB_Search.Text = "";
+                    }
+                }
+            }
+        }
+        #endregion
+
+        #region Выбор 1 RadioButton из 8
+        private void MRadio_sSurname_CheckedChanged(object sender, EventArgs e)
+        {
+            RadioButton radio = (RadioButton)sender;
+            if (radio.Checked)
+            {
+                switch (radio.Name)
+                {
+                    case "mRadio_Surname":
+                        mTextB_Search.Enabled = true;
+                        mButSerch.Visible = true;
+                        mTextB_Search.Visible = true;
+                        dgv_persons.Columns.Clear();
+                        dgv_persons.Rows.Clear();
+                        mTextB_Search.Text = "";
+                        break;
+                    case "mRadio_Birthday":
+                        dgv_persons.Columns.Clear();
+                        dgv_persons.Rows.Clear();
+                        mTextB_Search.Text = "";
+                        mTextB_Search.Enabled = true;
+                        mTextB_Search.Visible = true;
+                        mButSerch.Visible = true;
+                        break;
+                    
+                    case "mRadio_qualification":
+                        dgv_persons.Columns.Clear();
+                        dgv_persons.Rows.Clear();
+                        mTextB_Search.Text = "";
+                        mTextB_Search.Enabled = true;
+                        mTextB_Search.Visible = true;
+                        mButSerch.Visible = true;
+                        break;
+
+                    case "mRadio_TrainingDirection":
+                        dgv_persons.Columns.Clear();
+                        dgv_persons.Rows.Clear();
+                        mTextB_Search.Text = "";
+                        mTextB_Search.Enabled = true;
+                        mTextB_Search.Visible = true;
+                        mButSerch.Visible = true;
+                        break;
+                    case "mRadio_YearIssue":
+                        dgv_persons.Columns.Clear();
+                        dgv_persons.Rows.Clear();
+                        mTextB_Search.Text = "";
+                        mTextB_Search.Enabled = true;
+                        mTextB_Search.Visible = true;
+                        mButSerch.Visible = true;
+                        break;
+
+                    case "mRadio_profile":
+                        dgv_persons.Columns.Clear();
+                        dgv_persons.Rows.Clear();
+                        mTextB_Search.Text = "";
+                        mTextB_Search.Enabled = true;
+                        mTextB_Search.Visible = true;
+                        mButSerch.Visible = true;
+                        break;
+                    case "mRadio_FreeWork":
+                        break;////////////////////////////////////
+
+                    case "mRadio_NumOrg":
+                        dgv_persons.Columns.Clear();
+                        dgv_persons.Rows.Clear();
+                        mTextB_Search.Text = "";
+                        mTextB_Search.Enabled = true;
+                        mTextB_Search.Visible = true;
+                        mButSerch.Visible = true;
+                        break;
+                    case "mRadio_Post":
+                        dgv_persons.Columns.Clear();
+                        dgv_persons.Rows.Clear();
+                        mTextB_Search.Text = "";
+                        mTextB_Search.Enabled = true;
+                        mTextB_Search.Visible = true;
+                        mButSerch.Visible = true;
+                        break;
+
+                    case "mRadio_gender":
+                        mTextB_Search.Enabled = true;
+                        mTextB_Search.Visible = true;
+                        mButSerch.Visible = true;
+                        break;
+                    case "mRadio_all":
+                        dgv_persons.Columns.Clear();
+                        dgv_persons.Rows.Clear();
+                        mTextB_Search.Text = "";
+                        mTextB_Search.Enabled = false;
+                        mTextB_Search.Visible = false;
+                        mButSerch.Visible = true;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        #endregion
+
+        #region Добавить новую персону
+        private void Menu_addPerson_Click(object sender, EventArgs e)
+        {
+            new f_personalCards().ShowDialog();
+        }
+        #endregion
+
+        #region Form1_Load
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            mTextB_Search.Visible = false;
+            mButSerch.Visible = false;
+
+            String[] arguments = Environment.GetCommandLineArgs();
+            if (arguments.Count() <= 1)
+            {
+                Visible = false;
+                forms.f_DBLogin dBLogin = new forms.f_DBLogin();
+                dBLogin.ShowDialog();
+                // WindowState = FormWindowState.Maximized;
+                if (dBLogin.Pin)
+                {
+                    idUser = dBLogin.idUser;
+                    userRole = dBLogin.userRole;
+                    userPin = dBLogin.userPin;
+                    Visible = true;
+                }
+                else { Application.Exit(); }
+            }
+            else
+            {
+                idUser = Convert.ToInt32(arguments[1].Remove(0, 1));
+                if (CheckUser(arguments[1].Remove(0, 1)))
+                {
+                    Visible = true;
+                }
+                else { Application.Exit(); }
+            }
+        }
+        #endregion
+
+        #region О Программе
+        private void Menu_aboutProg_Click(object sender, EventArgs e)
+        {
+            string path = /* Path.GetFullPath(@"TextFile1.txt");*/ //"E:\\Projects\\C#\\Graduate\\Graduate\\TextFile1.txt";
+                "AboutGraduate.pdf";
+             System.Diagnostics.Process.Start(path);
+
+        }
+        #endregion
+
+        #region Экспорт из таблицы в Excel
+        private void Menu_exportExcel_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Excel.Application excel = new Excel.Application();
+                excel.Visible = true;
+                Excel.Workbook workbook = excel.Workbooks.Add(Missing.Value);
+                Excel.Worksheet sheet1 = (Excel.Worksheet)workbook.Sheets[1];
+                int StartCol = 0; // Скрыть 1 колонку где id
+                int StartRow = 1;
+                int j = 0, i = 0;
+
+                //Шапка в Excel. Начинаю с 1, что бы не видно было id
+                for (j = 1; j < dgv_persons.Columns.Count; j++)
+                {
+                    Excel.Range myRange = (Excel.Range)sheet1.Cells[StartRow, StartCol + j];
+                    myRange.Value2 = dgv_persons.Columns[j].HeaderText;
+                }
+                StartRow++;
+
+                // Данные с таблицы.
+                for (i = 0; i < dgv_persons.Rows.Count; i++)
+                {
+                    for (j = 0; j < dgv_persons.Columns.Count; j++)
+                    {
+                        try
+                        {
+                            Excel.Range myRange = (Excel.Range)sheet1.Cells[StartRow + i, StartCol + j];
+                            myRange.Value2 = dgv_persons[j, i].Value == null ? "" : dgv_persons[j, i].Value;
+                        }
+                        catch{ MessageBox.Show("Ошибка импорта"); }
+                    }
+                }
+            }
+            catch (Exception ex) {MessageBox.Show(ex.ToString());}
+        }
+        #endregion
+    }
+}

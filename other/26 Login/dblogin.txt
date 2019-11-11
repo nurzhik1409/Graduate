@@ -1,0 +1,81 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using MetroFramework.Forms;
+using Graduate.databse;
+
+namespace Graduate.forms
+{
+    public partial class f_DBLogin : MetroForm
+    {
+        public f_DBLogin() { InitializeComponent();}
+        public bool Pin = false;
+        public int idUser = 0;
+        public string userRole = "";
+        public string userPin = "";
+
+
+        private void b_ShowPass_Click(object sender, EventArgs e)
+        {
+            if (tb_Pin.PasswordChar == '*')
+                tb_Pin.PasswordChar = '\0';
+            else tb_Pin.PasswordChar = '*';
+        }
+
+        private void But_enter_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string hashPassDb = "";
+                using (DataBase db = new DataBase())
+                {
+                    usersRole ur = db.usersRole.FirstOrDefault(p => p.idUser == idUser);
+                    if (ur == null)
+                    {
+                        MessageBox.Show("У данного пользователя нет прав для работы с данной программой!");
+                    }
+                    else
+                    {
+                        hashPassDb = ur.users.pin;
+                        if (hashPassDb.Contains(tb_Pin.Text))
+                        {
+                            idUser = ur.users.id;
+                            Pin = true;
+                            userRole = ur.role.name;
+                            userPin = ur.users.pin;
+                            db.SaveChanges();
+                            Close();
+                        }
+                        else
+                        {
+                            Pin = false;
+                            MessageBox.Show("Неверно введен пин!");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void tb_Password_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter) but_enter.PerformClick();
+        }
+
+        private void but_cancel_Click(object sender, EventArgs e)
+        {
+            Pin = false;
+            Close();
+        }
+    }
+}
+
+

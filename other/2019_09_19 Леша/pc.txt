@@ -1,0 +1,251 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using MetroFramework.Forms;
+using MetroFramework.Controls;
+using System.Data.SqlClient;
+
+namespace Graduate
+{
+    public partial class f_personalCards : MetroForm
+    {
+        // int idUser = 0;
+        int idPers = 0;
+        public f_personalCards()
+        {
+            InitializeComponent();
+        }
+        public f_personalCards(int idPers)
+        {
+            InitializeComponent();
+            //this.idUser = idUser;
+            this.idPers = idPers;
+        }
+
+        string connectionString = "Server=192.168.250.25;Database=graduates;user=Rupit;password=Grib04ek:";
+
+        #region INSERT и UPDATE
+        private void MBut_savePersCard_Click(object sender, EventArgs e)
+        {
+            SqlDataReader sqlReader = null;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    if (idPers == 0)
+                    {
+                        string query1 = "INSERT INTO persons (idTypeQualification, surname, name, patronymic, gender, birthday," +
+              "addressCountry, addressRegion, addressArea, addressCity, addressStreet, addressHome, addressFlat," +
+              "trainingDirection, profile, yearIssue " +
+                                        "Values(@idTypeQualification, @surname, @name, @patronymic, @gender, @birthday," +
+                    "@addressCountry, @addressRegion, @addressArea, @addressCity, @addressStreet, @addressHome, @addressFlat," +
+                    "@trainingDirection, @profile, @yearIssue);";
+
+                        /*      string query2 = "INSERT INTO persToWork (idPers, idFreeWork," +
+                          "nameStateOrg, nameOrg, post, numCertificate, numReference, verificationArrival, commentary) " +
+                                              "Values(@idPers, @idFreeWork" +
+                          "@nameStateOrg, @nameOrg, @post, @numCertificate, @numReference, @verificationArrival, @commentary); "; */
+                        using (SqlCommand command = new SqlCommand(query1, connection))
+                       
+                        {
+                            // foreach (var nun in Controls.OfType<MetroTextBox>()){ if (nun.Text.Length == 0)MessageBox.Show("Введите :" + nun.WaterMark);else {
+                            connection.Open();
+                            command.Parameters.AddWithValue("@idTypeQualification", mComboB_qualificationLevel.Text);// (mComboB_qualificationLevel.Text == "бакалавр" ? "бакалавр" : "магистр")); // Образовательный уровень бакалавр/магистр
+
+                            command.Parameters.AddWithValue("@surname", mTextB_surname.Text);
+                            command.Parameters.AddWithValue("@name", mTextB_name.Text);
+                            command.Parameters.AddWithValue("@patronymic", mTextB_patronymic.Text);
+                            command.Parameters.AddWithValue("@gender", (mComboB_gender.Text == "муж" ? "муж" : "жен"));
+                            command.Parameters.AddWithValue("@birthday", mDateTime_birthday.Value); // ДР
+                            command.Parameters.AddWithValue("@addressCountry", mTextB_addressCountry.Text); // Страна
+                            command.Parameters.AddWithValue("@addressRegion", mTextB_addressRegion.Text); // Область
+                            command.Parameters.AddWithValue("@addressArea", mTextB_addressArea.Text); // Район
+                            command.Parameters.AddWithValue("@addressCity", mTextB_addressCity.Text); // Город
+                            command.Parameters.AddWithValue("@addressStreet", mTextB_addressStreet.Text); // Улица
+                            command.Parameters.AddWithValue("@addressHome", mTextB_addressHome.Text); // Дом
+                            command.Parameters.AddWithValue("@addressFlat", mTextB_addressFlat.Text); // Квартира
+                            command.Parameters.AddWithValue("@trainingDirection", mTextB_trainingDirection.Text); // Направление подготовки
+                            command.Parameters.AddWithValue("@profile", mTextB_profile.Text); // Профиль
+                            command.Parameters.AddWithValue("@yearIssue", mTextB_yearIssue.Text); // Год выпуска                                                             //}}
+                            command.ExecuteNonQuery();
+                            SqlCommand command2 = new SqlCommand("SELECT @@IDENTITY[@@IDENTITY];", connection);
+                            SqlDataReader rd;
+                            rd = command2.ExecuteReader();
+                            rd.Read();
+                            int id = Convert.ToInt32(rd[0].ToString());
+                            MessageBox.Show(id.ToString());
+                            connection.Close();
+                        }
+                      /*  using (SqlCommand command = new SqlCommand(query2, connection))
+                        {
+                            connection.Open();
+                            command.Parameters.AddWithValue("@idPers", mTextB_nameStateOrg.Text);
+                            command.Parameters.AddWithValue("@idFreeWork", mTextB_nameStateOrg.Text);// (mComboB_freeWork.Text == "1" ? "1" : "2")); // Право самостоятельного трудоустройства
+
+                            command.Parameters.AddWithValue("@nameStateOrg", mTextB_nameStateOrg.Text); // Название гос организации
+                            command.Parameters.AddWithValue("@nameOrg", mTextB_nameOrg.Text); // Название органпизации
+                            command.Parameters.AddWithValue("@post", mTextB_post.Text); // Должность
+                            command.Parameters.AddWithValue("@numCertificate", mTextB_numCertificate.Text); // № выданного свидетельсва
+                            command.Parameters.AddWithValue("@numReference", mTextB_numReference.Text); // № Выданной справки
+                            command.Parameters.AddWithValue("@verificationArrival", (mComboB_verificationArrival.Text == "T" ? "T" : "F")); // Подтверждение о прибытии
+                            command.Parameters.AddWithValue("@commentary", mTextB_commentary.Text); // Доп инфа
+                            command.ExecuteNonQuery();
+                            connection.Close();
+                        }
+                        */
+                        MessageBox.Show("Запись добавлена");
+                    }
+                    #region UPDATE выбранной персоны
+                    else
+                    {
+                        string query = "UPDATE PERSONS set surname=@surname, name=@name, patronymic=@patronymic, gender=@gender, birthday=@birthday," +
+                            "addressCountry=@addressCountry, addressRegion=@addressRegion, addressArea=@addressArea, addressCity=@addressCity, addressStreet=@addressStreet, addressHome=@addressHome, addressFlat=@addressFlat," +
+                            "qualificationLevel=@qualificationLevel, trainingDirection=@trainingDirection, profile=@profile, yearIssue=@yearIssue," +
+                            "nameStateOrg=@nameStateOrg, nameOrg=@nameOrg, post=@post, freeWorker=@freeWorker, numCertificate=@numCertificate, numReference=@numReference, verificationArrival=@verificationArrival, commentary=@commentary" +
+                            " where id =" + idPers.ToString() + ";";
+                        using (SqlCommand command = new SqlCommand(query, connection))
+                        {
+                            connection.Open();
+
+                            command.Parameters.AddWithValue("@surname", mTextB_surname.Text);
+                            command.Parameters.AddWithValue("@name", mTextB_name.Text);
+                            command.Parameters.AddWithValue("@patronymic", mTextB_patronymic.Text);
+                            command.Parameters.AddWithValue("@gender", (mComboB_gender.Text == "муж" ? "муж" : "жен"));
+                            command.Parameters.AddWithValue("@birthday", mDateTime_birthday.Value); // ДР
+                            
+                            command.Parameters.AddWithValue("@addressCountry", mTextB_addressCountry.Text); // Страна
+                            command.Parameters.AddWithValue("@addressRegion", mTextB_addressRegion.Text); // Область
+                            command.Parameters.AddWithValue("@addressArea", mTextB_addressArea.Text); // Район
+                            command.Parameters.AddWithValue("@addressCity", mTextB_addressCity.Text); // Город
+                            command.Parameters.AddWithValue("@addressStreet", mTextB_addressStreet.Text); // Улица
+                            command.Parameters.AddWithValue("@addressHome", mTextB_addressHome.Text); // Дом
+                            command.Parameters.AddWithValue("@addressFlat", mTextB_addressFlat.Text); // Квартира
+
+                            command.Parameters.AddWithValue("@qualificationLevel", (mComboB_qualificationLevel.Text == "бакалавр" ? "бакалавр" : "магистр")); // Образовательный уровень бакалавр/магистр
+                            command.Parameters.AddWithValue("@trainingDirection", mTextB_trainingDirection.Text); // Направление подготовки
+                            command.Parameters.AddWithValue("@profile", mTextB_profile.Text); // Профиль
+                            command.Parameters.AddWithValue("@yearIssue", mTextB_yearIssue.Text); // Год выпуска
+
+                            command.Parameters.AddWithValue("@nameStateOrg", mTextB_nameStateOrg.Text); // Название гос организации
+                            command.Parameters.AddWithValue("@nameOrg", mTextB_nameOrg.Text); // Название органпизации
+                            command.Parameters.AddWithValue("@post", mTextB_post.Text); // Должность
+                            command.Parameters.AddWithValue("@freeWorker", (mComboB_freeWork.Text == "в наличии" ? "в наличии" : "отсутствует")); // Право самостоятельного трудоустройства
+                            command.Parameters.AddWithValue("@numCertificate", mTextB_numCertificate.Text); // № выданного свидетельсва
+                            command.Parameters.AddWithValue("@numReference", mTextB_numReference.Text); // № Выданной справки
+                            command.Parameters.AddWithValue("@verificationArrival", (mComboB_verificationArrival.Text == "в наличии" ? "в наличии" : "отсутствует")); // Подтверждение о прибытии
+                            command.Parameters.AddWithValue("@commentary", mTextB_commentary.Text); // Доп инфа
+                              
+                            SqlDataReader rd;
+                            rd = command.ExecuteReader();
+                            while (rd.Read())
+                            {
+                                mTextB_surname.Text = rd[1].ToString();
+                                mTextB_name.Text = rd[2].ToString();
+                                mTextB_patronymic.Text = rd[3].ToString();
+                                mComboB_gender.Text = rd[4].ToString();
+                                mDateTime_birthday.Text = rd[5].ToString();
+
+                                mTextB_addressCountry.Text = rd[6].ToString();
+                                mTextB_addressRegion.Text = rd[7].ToString();
+                                mTextB_addressArea.Text = rd[8].ToString();
+                                mTextB_addressCity.Text = rd[9].ToString();
+                                mTextB_addressStreet.Text = rd[10].ToString();
+                                mTextB_addressHome.Text = rd[11].ToString();
+                                mTextB_addressFlat.Text = rd[12].ToString();
+
+                                mComboB_qualificationLevel.Text = rd[13].ToString();
+                                mTextB_trainingDirection.Text = rd[14].ToString();
+                                mTextB_profile.Text = rd[15].ToString();
+                                mTextB_yearIssue.Text = rd[16].ToString();
+
+                                mTextB_nameStateOrg.Text = rd[17].ToString();
+                                mTextB_nameOrg.Text = rd[18].ToString();
+                                mTextB_post.Text = rd[19].ToString();
+                                mComboB_freeWork.Text = rd[20].ToString();
+                                mTextB_numCertificate.Text = rd[21].ToString();
+                                mTextB_numReference.Text = rd[22].ToString();
+                                mComboB_verificationArrival.Text = rd[23].ToString();
+                                mTextB_commentary.Text = rd[24].ToString();
+                            }
+                            rd.Close();
+                            command.ExecuteNonQuery();
+                            MessageBox.Show("Запись изменена");
+                            connection.Close();
+                        }
+                    }
+                    #endregion
+                }
+            }
+            catch (Exception ex) { MessageBox.Show(ex.Message.ToString()); }
+            finally
+            {
+                if (sqlReader != null)
+                    sqlReader.Close();
+            }
+        }
+        #endregion
+
+        #region Заполнение данных 2 клика
+        private void F_personalCards_Load(object sender, EventArgs e)
+        {
+            if (idPers != 0)
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    string query = "SELECT id, surname, name, patronymic, gender, birthday, " +
+                        "addressCountry, addressRegion, addressArea, addressCity, addressStreet, addressHome, addressFlat, " +
+                        "qualificationLevel, trainingDirection, profile, yearIssue, " +
+                        "nameStateOrg, nameOrg, post, freeWorker, numCertificate, numReference, verificationArrival, commentary " +
+                        " FROM PERSONS where id =" + idPers.ToString();
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        connection.Open();
+                        SqlDataReader rd;
+                        rd = command.ExecuteReader();
+                        while (rd.Read())
+                        {
+                            mTextB_surname.Text = rd[1].ToString();
+                            mTextB_name.Text = rd[2].ToString();
+                            mTextB_patronymic.Text = rd[3].ToString();
+                            mComboB_gender.Text = rd[4].ToString();
+                            mDateTime_birthday.Text = rd[5].ToString();
+
+                            mTextB_addressCountry.Text = rd[6].ToString();
+                            mTextB_addressRegion.Text = rd[7].ToString();
+                            mTextB_addressArea.Text = rd[8].ToString();
+                            mTextB_addressCity.Text = rd[9].ToString();
+                            mTextB_addressStreet.Text = rd[10].ToString();
+                            mTextB_addressHome.Text = rd[11].ToString();
+                            mTextB_addressFlat.Text = rd[12].ToString();
+
+                            mComboB_qualificationLevel.Text = rd[13].ToString();
+                            mTextB_trainingDirection.Text = rd[14].ToString();
+                            mTextB_profile.Text = rd[15].ToString();
+                            mTextB_yearIssue.Text = rd[16].ToString();
+
+                            mTextB_nameStateOrg.Text = rd[17].ToString();
+                            mTextB_nameOrg.Text = rd[18].ToString();
+                            mTextB_post.Text = rd[19].ToString();
+                            mComboB_freeWork.Text = rd[20].ToString();
+                            mTextB_numCertificate.Text = rd[21].ToString();
+                            mTextB_numReference.Text = rd[22].ToString();
+                            mComboB_verificationArrival.Text = rd[23].ToString();
+                            mTextB_commentary.Text = rd[24].ToString();
+                        }
+                        rd.Close();
+                        command.ExecuteNonQuery();
+                        //MessageBox.Show("Запись изменена");
+                        connection.Close();
+                    }
+                }
+            }
+        }
+        #endregion
+    }
+}
+s

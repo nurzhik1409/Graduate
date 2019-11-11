@@ -1,0 +1,169 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{ED83B26E-AEF6-400A-9C34-170E7B8CBC5A}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>Graduate</RootNamespace>
+    <AssemblyName>Graduate</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>icons8-student-male-48.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Bunifu_UI_v1.52, Version=1.3.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Bunifu_UI_v1.52.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net40\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net40\EntityFramework.SqlServer.dll</HintPath>
+    </Reference>
+    <Reference Include="MetroFramework, Version=1.4.0.0, Culture=neutral, PublicKeyToken=5f91a84759bf584a, processorArchitecture=MSIL">
+      <HintPath>..\packages\MetroModernUI.1.4.0.0\lib\net\MetroFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="MetroFramework.Design, Version=1.4.0.0, Culture=neutral, PublicKeyToken=5f91a84759bf584a, processorArchitecture=MSIL">
+      <HintPath>..\packages\MetroModernUI.1.4.0.0\lib\net\MetroFramework.Design.dll</HintPath>
+    </Reference>
+    <Reference Include="MetroFramework.Fonts, Version=1.4.0.0, Culture=neutral, PublicKeyToken=5f91a84759bf584a, processorArchitecture=MSIL">
+      <HintPath>..\packages\MetroModernUI.1.4.0.0\lib\net\MetroFramework.Fonts.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Office.Interop.Excel.15.0.4795.1000\lib\net20\Microsoft.Office.Interop.Excel.dll</HintPath>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="databse\DataBase.cs" />
+    <Compile Include="databse\freeWork.cs" />
+    <Compile Include="databse\logs.cs" />
+    <Compile Include="databse\persons.cs" />
+    <Compile Include="databse\persToWork.cs" />
+    <Compile Include="databse\role.cs" />
+    <Compile Include="databse\typeQualification.cs" />
+    <Compile Include="databse\users.cs" />
+    <Compile Include="databse\usersRole.cs" />
+    <Compile Include="forms\f_addUser.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="forms\f_addUser.Designer.cs">
+      <DependentUpon>f_addUser.cs</DependentUpon>
+    </Compile>
+    <Compile Include="forms\f_clearPersYear.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="forms\f_clearPersYear.Designer.cs">
+      <DependentUpon>f_clearPersYear.cs</DependentUpon>
+    </Compile>
+    <Compile Include="forms\f_DBLogin.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="forms\f_DBLogin.Designer.cs">
+      <DependentUpon>f_DBLogin.cs</DependentUpon>
+    </Compile>
+    <Compile Include="forms\f_main.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="forms\f_main.Designer.cs">
+      <DependentUpon>f_main.cs</DependentUpon>
+    </Compile>
+    <Compile Include="forms\f_orderFreWork.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="forms\f_orderFreWork.Designer.cs">
+      <DependentUpon>f_orderFreWork.cs</DependentUpon>
+    </Compile>
+    <Compile Include="forms\f_personalCards.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="forms\f_personalCards.Designer.cs">
+      <DependentUpon>f_personalCards.cs</DependentUpon>
+    </Compile>
+    <Compile Include="main\Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="forms\f_addUser.resx">
+      <DependentUpon>f_addUser.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="forms\f_clearPersYear.resx">
+      <DependentUpon>f_clearPersYear.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="forms\f_DBLogin.resx">
+      <DependentUpon>f_DBLogin.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="forms\f_main.resx">
+      <DependentUpon>f_main.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="forms\f_orderFreWork.resx">
+      <DependentUpon>f_orderFreWork.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="forms\f_personalCards.resx">
+      <DependentUpon>f_personalCards.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <None Include="App.Config" />
+    <None Include="packages.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="help\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="icons8-student-male-48.ico" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
