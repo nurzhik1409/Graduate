@@ -7,14 +7,25 @@ using System.Reflection;
 using Excel = Microsoft.Office.Interop.Excel;
 using Graduate.databse;
 using Graduate.forms;
-//using System.Drawing;
+using DGVWF;
+using System.Drawing;
 
 namespace Graduate
 {
     public partial class f_main : MetroForm
     {
-        public f_main() { InitializeComponent(); }
+        public DataGridViewWithFilter dgv_persons = new DataGridViewWithFilter();
+        //DataGridViewWithFilter DG = new DataGridViewWithFilter();
 
+        public f_main()
+        {
+            InitializeComponent();
+
+
+            dgv_persons.CellDoubleClick += new DataGridViewCellEventHandler(this.DataGrid);
+            dgv_persons.VirtualMode = true;  
+            
+        }
         // авторизация
         public int idUser = 0;
         public string userRole = "";
@@ -24,7 +35,7 @@ namespace Graduate
         int id = 0; // Для фильтра поиска
 
         #region 2Клик по таблице, открывает личную карту с информацие о выбранном студенте
-        private void Dgv_persons_CellDoubleClick_1(object sender, DataGridViewCellEventArgs e)
+        private void DG_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             try
             {
@@ -35,8 +46,6 @@ namespace Graduate
         #endregion
 
         #region DELETE Правый клик по таблице вызывает Контексное меню - удалить
-
-        // контесное меню таблицы
         private void Dgv_persons_MouseClick_1(object sender, MouseEventArgs e)
         {
            if (e.Button == MouseButtons.Right) { contextDVG.Show(Cursor.Position.X, Cursor.Position.Y); }
@@ -97,686 +106,6 @@ namespace Graduate
         }
         #endregion
 
-        #region Фильтр поиска
-        // Файл-Фильтры скрыть/покзать панель
-        private void Menu_filter_Click(object sender, EventArgs e)
-        {
-            if (group_Search.Visible == true)
-                group_Search.Visible = false;
-            else
-                group_Search.Visible = true;
-            return;
-        }
-
-        public void funFilter()
-        {
-            dgv_persons.Columns.Clear();
-            dgv_persons.Rows.Clear();
-            dgv_persons.Columns.Add("id", "id"); // 0
-            dgv_persons.Columns.Add("surname, name, patronymic", "ФИО"); // 1
-            //dgv_persons.Columns.Add("name", "Имя"); // 2
-            //dgv_persons.Columns.Add("patronymic", "Отчество"); //  3
-            dgv_persons.Columns.Add("birthday", "Дата рождения"); // 2
-            dgv_persons.Columns.Add("gender", "Пол"); // 3
-
-           // dgv_persons.Columns.Add("addressRegion", "Область"); // 7
-            //dgv_persons.Columns.Add("addressArea", "Район"); // 8
-            dgv_persons.Columns.Add("addressCountry, addressCity, addressStreet, addressHome", "Адрес проживания"); // 4
-          //  dgv_persons.Columns.Add("addressStreet", "Улица"); // 4
-          //  dgv_persons.Columns.Add("addressHome", "дом"); // 5
-            //dgv_persons.Columns.Add("addressFlat", "квартира"); // 12
-
-            dgv_persons.Columns.Add("nameQualification", "Квалификационный уровень"); // 5
-            dgv_persons.Columns.Add("trainingDirection", "Направление подготовки"); // 6
-            dgv_persons.Columns.Add("profile", "Профиль"); // 7
-            dgv_persons.Columns.Add("yeatIssue", "Год выпуска"); // 8
-
-            dgv_persons.Columns.Add("nameStateOrg", "Название государственной организации"); // 9
-            dgv_persons.Columns.Add("educational", "Образовательное учреждение"); // 10
-            dgv_persons.Columns.Add("nameOrg", "Название организации(предприятия)"); // 11
-            dgv_persons.Columns.Add("post", "Должность"); // 12
-            dgv_persons.Columns.Add("cityOrg", "Город организации"); // 13
-
-            dgv_persons.Columns.Add("numCertificate", "№ свидетельства"); // 14
-            dgv_persons.Columns.Add("nameFreeWork", "Самостоятельное трудоустройство"); // 15
-            dgv_persons.Columns.Add("numReference", "№ справки"); // 16
-            dgv_persons.Columns.Add("verificationArrival", "Подтверждение прибытия"); // 17
-            dgv_persons.Columns.Add("commentary", "Дополнительная информация"); // 18
-            dgv_persons.Columns[0].Visible = false; // id не видим
-        }
-        private void MButSerch_Click(object sender, EventArgs e)
-        {
-            int i = 0;
-            using (DataBase db = new DataBase())
-            {
-                if (mRadio_Surname.Checked == true)
-                {
-                    funFilter();
-                    //dgv_persons[20, i].Value = "\"" + pTW.freeWork.nameFreeWork + "\""; 
-                    //var ser = db.persToWork.Where(obj => mTextB_Search.Text.Contains(obj.persons.surname)).ToList();
-                    var ser = db.persToWork.Where(obj => obj.persons.surname == mTextB_Search.Text).ToList();
-                    if (ser.Count() > 0)
-                    {
-                        dgv_persons.Rows.Add(ser.Count());
-                        foreach (persToWork pTW in ser) // Заполнение таблицы 
-                        {
-                            dgv_persons[0, i].Value = pTW.id;
-                            dgv_persons[1, i].Value = pTW.persons.surname + " " + pTW.persons.name + " " + pTW.persons.patronymic;
-                            dgv_persons[2, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); // longDate для месяца
-                            dgv_persons[3, i].Value = pTW.persons.gender;
-
-                            //dgv_persons[5, i].Value = pTW.persons.addressRegion;
-                            // dgv_persons[6, i].Value = pTW.persons.addressArea;
-                            dgv_persons[4, i].Value = pTW.persons.addressCountry + " " + pTW.persons.addressCity + " " + pTW.persons.addressStreet + " " + pTW.persons.addressHome;
-                            //dgv_persons[10, i].Value = pTW.persons.addressFlat;
-
-                            dgv_persons[5, i].Value = pTW.persons.typeQualification.nameQualification;
-                            dgv_persons[6, i].Value = pTW.persons.trainingDirection;
-                            dgv_persons[7, i].Value = pTW.persons.profile;
-                            dgv_persons[8, i].Value = pTW.persons.yeatIssue;
-                            dgv_persons[9, i].Value = pTW.nameStateOrg;
-                            dgv_persons[10, i].Value = pTW.educational;
-                            dgv_persons[11, i].Value = pTW.nameOrg;
-                            dgv_persons[12, i].Value = pTW.post;
-                            dgv_persons[13, i].Value = pTW.cityOrg;
-                            dgv_persons[14, i].Value = pTW.numCertificate;
-                            dgv_persons[15, i].Value = pTW.freeWork.nameFreeWork;
-                            dgv_persons[16, i].Value = pTW.numReference;
-                            dgv_persons[17, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
-                            dgv_persons[18, i].Value = pTW.commentary;
-                            i++;
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("Человека с такой Фамилией нет");
-                        mTextB_Search.Text = "";
-                    }
-                }
-                if (mRadio_Birthday.Checked == true)
-                {
-                    funFilter();
-                    var ser = db.persToWork.Where(obj => mTextB_Search.Text.Contains(obj.persons.birthday.Value.Year.ToString())).ToList();
-                    if (ser.Count() > 0)
-                    {
-                        dgv_persons.Rows.Add(ser.Count());
-                        foreach (persToWork pTW in ser) // Заполнение таблицы 
-                        {
-                            dgv_persons[0, i].Value = pTW.id;
-                            dgv_persons[1, i].Value = pTW.persons.surname + " " + pTW.persons.name + " " + pTW.persons.patronymic;
-                            dgv_persons[2, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); // longDate для месяца
-                            dgv_persons[3, i].Value = pTW.persons.gender;
-                            dgv_persons[4, i].Value = pTW.persons.addressCountry + " " + pTW.persons.addressCity + " " + pTW.persons.addressStreet + " " + pTW.persons.addressHome;
-                            dgv_persons[5, i].Value = pTW.persons.typeQualification.nameQualification;
-                            dgv_persons[6, i].Value = pTW.persons.trainingDirection;
-                            dgv_persons[7, i].Value = pTW.persons.profile;
-                            dgv_persons[8, i].Value = pTW.persons.yeatIssue;
-                            dgv_persons[9, i].Value = pTW.nameStateOrg;
-                            dgv_persons[10, i].Value = pTW.educational;
-                            dgv_persons[11, i].Value = pTW.nameOrg;
-                            dgv_persons[12, i].Value = pTW.post;
-                            dgv_persons[13, i].Value = pTW.cityOrg;
-                            dgv_persons[14, i].Value = pTW.numCertificate;
-                            dgv_persons[15, i].Value = pTW.freeWork.nameFreeWork;
-                            dgv_persons[16, i].Value = pTW.numReference;
-                            dgv_persons[17, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
-                            dgv_persons[18, i].Value = pTW.commentary;
-                            i++;
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("Человека с такой датой нет");
-                        mTextB_Search.Text = "";
-                    }
-                }
-                if (mRadio_gender.Checked == true)
-                {
-                    funFilter();
-                    var ser = db.persToWork.Where(obj => mTextB_Search.Text.Contains(obj.persons.gender)).ToList();
-                    if (ser.Count() > 0)
-                    {
-                        dgv_persons.Rows.Add(ser.Count());
-                        foreach (persToWork pTW in ser) // Заполнение таблицы 
-                        {
-                            dgv_persons[0, i].Value = pTW.id;
-                            dgv_persons[1, i].Value = pTW.persons.surname + " " + pTW.persons.name + " " + pTW.persons.patronymic;
-                            dgv_persons[2, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); // longDate для месяца
-                            dgv_persons[3, i].Value = pTW.persons.gender;
-                            dgv_persons[4, i].Value = pTW.persons.addressCountry + " " + pTW.persons.addressCity + " " + pTW.persons.addressStreet + " " + pTW.persons.addressHome;
-                            dgv_persons[5, i].Value = pTW.persons.typeQualification.nameQualification;
-                            dgv_persons[6, i].Value = pTW.persons.trainingDirection;
-                            dgv_persons[7, i].Value = pTW.persons.profile;
-                            dgv_persons[8, i].Value = pTW.persons.yeatIssue;
-                            dgv_persons[9, i].Value = pTW.nameStateOrg;
-                            dgv_persons[10, i].Value = pTW.educational;
-                            dgv_persons[11, i].Value = pTW.nameOrg;
-                            dgv_persons[12, i].Value = pTW.post;
-                            dgv_persons[13, i].Value = pTW.cityOrg;
-                            dgv_persons[14, i].Value = pTW.numCertificate;
-                            dgv_persons[15, i].Value = pTW.freeWork.nameFreeWork;
-                            dgv_persons[16, i].Value = pTW.numReference;
-                            dgv_persons[17, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
-                            dgv_persons[18, i].Value = pTW.commentary;
-                            i++;
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("Человек данного пола отсутсвуют. Правильно вводить 'муж' или 'жен' в строку поиска");
-                        mTextB_Search.Text = "";
-                    }
-                }
-                if (mRadio_addressCity.Checked == true)
-                {
-                    funFilter();
-                    var ser = db.persToWork.Where(obj => obj.persons.addressCity == mTextB_Search.Text).ToList();
-                    if (ser.Count() > 0)
-                    {
-                        dgv_persons.Rows.Add(ser.Count());
-                        foreach (persToWork pTW in ser) // Заполнение таблицы 
-                        {
-                            dgv_persons[0, i].Value = pTW.id;
-                            dgv_persons[1, i].Value = pTW.persons.surname + " " + pTW.persons.name + " " + pTW.persons.patronymic;
-                            dgv_persons[2, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); // longDate для месяца
-                            dgv_persons[3, i].Value = pTW.persons.gender;
-                            dgv_persons[4, i].Value = pTW.persons.addressCountry + " " + pTW.persons.addressCity + " " + pTW.persons.addressStreet + " " + pTW.persons.addressHome;
-                            dgv_persons[5, i].Value = pTW.persons.typeQualification.nameQualification;
-                            dgv_persons[6, i].Value = pTW.persons.trainingDirection;
-                            dgv_persons[7, i].Value = pTW.persons.profile;
-                            dgv_persons[8, i].Value = pTW.persons.yeatIssue;
-                            dgv_persons[9, i].Value = pTW.nameStateOrg;
-                            dgv_persons[10, i].Value = pTW.educational;
-                            dgv_persons[11, i].Value = pTW.nameOrg;
-                            dgv_persons[12, i].Value = pTW.post;
-                            dgv_persons[13, i].Value = pTW.cityOrg;
-                            dgv_persons[14, i].Value = pTW.numCertificate;
-                            dgv_persons[15, i].Value = pTW.freeWork.nameFreeWork;
-                            dgv_persons[16, i].Value = pTW.numReference;
-                            dgv_persons[17, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
-                            dgv_persons[18, i].Value = pTW.commentary;
-                            i++;
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("Данного города нет или в базе отсутсвуют людей, которые в нем проживают");
-                        mTextB_Search.Text = "";
-                    }
-                }
-
-                if (mRadio_qualification.Checked == true)
-                {
-                    funFilter();
-                    var ser = db.persToWork.Where(obj => mTextB_Search.Text.Contains(obj.persons.typeQualification.nameQualification)).ToList();
-                    if (ser.Count() > 0)
-                    {
-                        dgv_persons.Rows.Add(ser.Count());
-                        foreach (persToWork pTW in ser) // Заполнение таблицы 
-                        {
-                            dgv_persons[0, i].Value = pTW.id;
-                            dgv_persons[1, i].Value = pTW.persons.surname + " " + pTW.persons.name + " " + pTW.persons.patronymic;
-                            dgv_persons[2, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); // longDate для месяца
-                            dgv_persons[3, i].Value = pTW.persons.gender;
-                            dgv_persons[4, i].Value = pTW.persons.addressCountry + " " + pTW.persons.addressCity + " " + pTW.persons.addressStreet + " " + pTW.persons.addressHome;
-                            dgv_persons[5, i].Value = pTW.persons.typeQualification.nameQualification;
-                            dgv_persons[6, i].Value = pTW.persons.trainingDirection;
-                            dgv_persons[7, i].Value = pTW.persons.profile;
-                            dgv_persons[8, i].Value = pTW.persons.yeatIssue;
-                            dgv_persons[9, i].Value = pTW.nameStateOrg;
-                            dgv_persons[10, i].Value = pTW.educational;
-                            dgv_persons[11, i].Value = pTW.nameOrg;
-                            dgv_persons[12, i].Value = pTW.post;
-                            dgv_persons[13, i].Value = pTW.cityOrg;
-                            dgv_persons[14, i].Value = pTW.numCertificate;
-                            dgv_persons[15, i].Value = pTW.freeWork.nameFreeWork;
-                            dgv_persons[16, i].Value = pTW.numReference;
-                            dgv_persons[17, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
-                            dgv_persons[18, i].Value = pTW.commentary;
-                            i++;
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("Человека с такой датой нет");
-                        mTextB_Search.Text = "";
-                    }
-                }
-                if (mRadio_TrainingDirection.Checked == true)
-                {
-                    funFilter();
-                    var ser = db.persToWork.Where(obj => mTextB_Search.Text.Contains(obj.persons.trainingDirection)).ToList();
-                    if (ser.Count() > 0)
-                    {
-                        dgv_persons.Rows.Add(ser.Count());
-                        foreach (persToWork pTW in ser) // Заполнение таблицы 
-                        {
-                            dgv_persons[0, i].Value = pTW.id;
-                            dgv_persons[1, i].Value = pTW.persons.surname + " " + pTW.persons.name + " " + pTW.persons.patronymic;
-                            dgv_persons[2, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); // longDate для месяца
-                            dgv_persons[3, i].Value = pTW.persons.gender;
-                            dgv_persons[4, i].Value = pTW.persons.addressCountry + " " + pTW.persons.addressCity + " " + pTW.persons.addressStreet + " " + pTW.persons.addressHome;
-                            dgv_persons[5, i].Value = pTW.persons.typeQualification.nameQualification;
-                            dgv_persons[6, i].Value = pTW.persons.trainingDirection;
-                            dgv_persons[7, i].Value = pTW.persons.profile;
-                            dgv_persons[8, i].Value = pTW.persons.yeatIssue;
-                            dgv_persons[9, i].Value = pTW.nameStateOrg;
-                            dgv_persons[10, i].Value = pTW.educational;
-                            dgv_persons[11, i].Value = pTW.nameOrg;
-                            dgv_persons[12, i].Value = pTW.post;
-                            dgv_persons[13, i].Value = pTW.cityOrg;
-                            dgv_persons[14, i].Value = pTW.numCertificate;
-                            dgv_persons[15, i].Value = pTW.freeWork.nameFreeWork;
-                            dgv_persons[16, i].Value = pTW.numReference;
-                            dgv_persons[17, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
-                            dgv_persons[18, i].Value = pTW.commentary;
-                            i++;
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("Человека с такой датой нет");
-                        mTextB_Search.Text = "";
-                    }
-                }
-                if (mRadio_profile.Checked == true)
-                {
-                    funFilter();
-                    var ser = db.persToWork.Where(obj => mTextB_Search.Text.Contains(obj.persons.profile)).ToList();
-                    if (ser.Count() > 0)
-                    {
-                        dgv_persons.Rows.Add(ser.Count());
-                        foreach (persToWork pTW in ser) // Заполнение таблицы 
-                        {
-                            dgv_persons[0, i].Value = pTW.id;
-                            dgv_persons[1, i].Value = pTW.persons.surname + " " + pTW.persons.name + " " + pTW.persons.patronymic;
-                            dgv_persons[2, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); // longDate для месяца
-                            dgv_persons[3, i].Value = pTW.persons.gender;
-                            dgv_persons[4, i].Value = pTW.persons.addressCountry + " " + pTW.persons.addressCity + " " + pTW.persons.addressStreet + " " + pTW.persons.addressHome;
-                            dgv_persons[5, i].Value = pTW.persons.typeQualification.nameQualification;
-                            dgv_persons[6, i].Value = pTW.persons.trainingDirection;
-                            dgv_persons[7, i].Value = pTW.persons.profile;
-                            dgv_persons[8, i].Value = pTW.persons.yeatIssue;
-                            dgv_persons[9, i].Value = pTW.nameStateOrg;
-                            dgv_persons[10, i].Value = pTW.educational;
-                            dgv_persons[11, i].Value = pTW.nameOrg;
-                            dgv_persons[12, i].Value = pTW.post;
-                            dgv_persons[13, i].Value = pTW.cityOrg;
-                            dgv_persons[14, i].Value = pTW.numCertificate;
-                            dgv_persons[15, i].Value = pTW.freeWork.nameFreeWork;
-                            dgv_persons[16, i].Value = pTW.numReference;
-                            dgv_persons[17, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
-                            dgv_persons[18, i].Value = pTW.commentary;
-                            i++;
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("Человека с таким профилем нет");
-                        mTextB_Search.Text = "";
-                    }
-                }
-                if (mRadio_YearIssue.Checked == true)
-                {
-                    funFilter();
-                    var ser = db.persToWork.Where(obj => mTextB_Search.Text.Contains(obj.persons.yeatIssue.Value.ToString())).ToList();
-                    if (ser.Count() > 0)
-                    {
-                        dgv_persons.Rows.Add(ser.Count());
-                        foreach (persToWork pTW in ser) // Заполнение таблицы 
-                        {
-                            dgv_persons[0, i].Value = pTW.id;
-                            dgv_persons[1, i].Value = pTW.persons.surname + " " + pTW.persons.name + " " + pTW.persons.patronymic;
-                            dgv_persons[2, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); // longDate для месяца
-                            dgv_persons[3, i].Value = pTW.persons.gender;
-                            dgv_persons[4, i].Value = pTW.persons.addressCountry + " " + pTW.persons.addressCity + " " + pTW.persons.addressStreet + " " + pTW.persons.addressHome;
-                            dgv_persons[5, i].Value = pTW.persons.typeQualification.nameQualification;
-                            dgv_persons[6, i].Value = pTW.persons.trainingDirection;
-                            dgv_persons[7, i].Value = pTW.persons.profile;
-                            dgv_persons[8, i].Value = pTW.persons.yeatIssue;
-                            dgv_persons[9, i].Value = pTW.nameStateOrg;
-                            dgv_persons[10, i].Value = pTW.educational;
-                            dgv_persons[11, i].Value = pTW.nameOrg;
-                            dgv_persons[12, i].Value = pTW.post;
-                            dgv_persons[13, i].Value = pTW.cityOrg;
-                            dgv_persons[14, i].Value = pTW.numCertificate;
-                            dgv_persons[15, i].Value = pTW.freeWork.nameFreeWork;
-                            dgv_persons[16, i].Value = pTW.numReference;
-                            dgv_persons[17, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
-                            dgv_persons[18, i].Value = pTW.commentary;
-                            i++;
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("В этом году нет выпускников");
-                        mTextB_Search.Text = "";
-                    }
-                }
-
-                if (mRadio_nameStateOrg.Checked == true)
-                {
-                    funFilter();
-                    var ser = db.persToWork.Where(obj => mTextB_Search.Text.Contains(obj.nameStateOrg)).ToList();
-                    if (ser.Count() > 0)
-                    {
-                        dgv_persons.Rows.Add(ser.Count());
-                        foreach (persToWork pTW in ser) // Заполнение таблицы 
-                        {
-                            dgv_persons[0, i].Value = pTW.id;
-                            dgv_persons[1, i].Value = pTW.persons.surname + " " + pTW.persons.name + " " + pTW.persons.patronymic;
-                            dgv_persons[2, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); // longDate для месяца
-                            dgv_persons[3, i].Value = pTW.persons.gender;
-                            dgv_persons[4, i].Value = pTW.persons.addressCountry + " " + pTW.persons.addressCity + " " + pTW.persons.addressStreet + " " + pTW.persons.addressHome;
-                            dgv_persons[5, i].Value = pTW.persons.typeQualification.nameQualification;
-                            dgv_persons[6, i].Value = pTW.persons.trainingDirection;
-                            dgv_persons[7, i].Value = pTW.persons.profile;
-                            dgv_persons[8, i].Value = pTW.persons.yeatIssue;
-                            dgv_persons[9, i].Value = pTW.nameStateOrg;
-                            dgv_persons[10, i].Value = pTW.educational;
-                            dgv_persons[11, i].Value = pTW.nameOrg;
-                            dgv_persons[12, i].Value = pTW.post;
-                            dgv_persons[13, i].Value = pTW.cityOrg;
-                            dgv_persons[14, i].Value = pTW.numCertificate;
-                            dgv_persons[15, i].Value = pTW.freeWork.nameFreeWork;
-                            dgv_persons[16, i].Value = pTW.numReference;
-                            dgv_persons[17, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
-                            dgv_persons[18, i].Value = pTW.commentary;
-                            i++;
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("Человека с таким профилем нет");
-                        mTextB_Search.Text = "";
-                    }
-                }
-                if (mRadio_educational.Checked == true)
-                {
-                    funFilter();
-                    var ser = db.persToWork.Where(obj => mTextB_Search.Text.Contains(obj.educational)).ToList();
-                    if (ser.Count() > 0)
-                    {
-                        dgv_persons.Rows.Add(ser.Count());
-                        foreach (persToWork pTW in ser) // Заполнение таблицы 
-                        {
-                            dgv_persons[0, i].Value = pTW.id;
-                            dgv_persons[1, i].Value = pTW.persons.surname + " " + pTW.persons.name + " " + pTW.persons.patronymic;
-                            dgv_persons[2, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); // longDate для месяца
-                            dgv_persons[3, i].Value = pTW.persons.gender;
-                            dgv_persons[4, i].Value = pTW.persons.addressCountry + " " + pTW.persons.addressCity + " " + pTW.persons.addressStreet + " " + pTW.persons.addressHome;
-                            dgv_persons[5, i].Value = pTW.persons.typeQualification.nameQualification;
-                            dgv_persons[6, i].Value = pTW.persons.trainingDirection;
-                            dgv_persons[7, i].Value = pTW.persons.profile;
-                            dgv_persons[8, i].Value = pTW.persons.yeatIssue;
-                            dgv_persons[9, i].Value = pTW.nameStateOrg;
-                            dgv_persons[10, i].Value = pTW.educational;
-                            dgv_persons[11, i].Value = pTW.nameOrg;
-                            dgv_persons[12, i].Value = pTW.post;
-                            dgv_persons[13, i].Value = pTW.cityOrg;
-                            dgv_persons[14, i].Value = pTW.numCertificate;
-                            dgv_persons[15, i].Value = pTW.freeWork.nameFreeWork;
-                            dgv_persons[16, i].Value = pTW.numReference;
-                            dgv_persons[17, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
-                            dgv_persons[18, i].Value = pTW.commentary;
-                            i++;
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("Данного образовательного учреждения нет или в базе отсутсвуют людей, которые в нем работают");
-                        mTextB_Search.Text = "";
-                    }
-                }
-                if (mRadio_NumOrg.Checked == true)
-                {
-                    funFilter();
-                    var ser = db.persToWork.Where(obj => mTextB_Search.Text.Contains(obj.nameOrg)).ToList();
-                    if (ser.Count() > 0)
-                    {
-                        dgv_persons.Rows.Add(ser.Count());
-                        foreach (persToWork pTW in ser) // Заполнение таблицы 
-                        {
-                            dgv_persons[0, i].Value = pTW.id;
-                            dgv_persons[1, i].Value = pTW.persons.surname + " " + pTW.persons.name + " " + pTW.persons.patronymic;
-                            dgv_persons[2, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); // longDate для месяца
-                            dgv_persons[3, i].Value = pTW.persons.gender;
-                            dgv_persons[4, i].Value = pTW.persons.addressCountry + " " + pTW.persons.addressCity + " " + pTW.persons.addressStreet + " " + pTW.persons.addressHome;
-                            dgv_persons[5, i].Value = pTW.persons.typeQualification.nameQualification;
-                            dgv_persons[6, i].Value = pTW.persons.trainingDirection;
-                            dgv_persons[7, i].Value = pTW.persons.profile;
-                            dgv_persons[8, i].Value = pTW.persons.yeatIssue;
-                            dgv_persons[9, i].Value = pTW.nameStateOrg;
-                            dgv_persons[10, i].Value = pTW.educational;
-                            dgv_persons[11, i].Value = pTW.nameOrg;
-                            dgv_persons[12, i].Value = pTW.post;
-                            dgv_persons[13, i].Value = pTW.cityOrg;
-                            dgv_persons[14, i].Value = pTW.numCertificate;
-                            dgv_persons[15, i].Value = pTW.freeWork.nameFreeWork;
-                            dgv_persons[16, i].Value = pTW.numReference;
-                            dgv_persons[17, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
-                            dgv_persons[18, i].Value = pTW.commentary;
-                            i++;
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("Человека с таким профилем нет");
-                        mTextB_Search.Text = "";
-                    }
-                }
-                if (mRadio_Post.Checked == true)
-                {
-                    funFilter();
-                    var ser = db.persToWork.Where(obj => mTextB_Search.Text.Contains(obj.post)).ToList();
-                    if (ser.Count() > 0)
-                    {
-                        dgv_persons.Rows.Add(ser.Count());
-                        foreach (persToWork pTW in ser) // Заполнение таблицы 
-                        {
-                            dgv_persons[0, i].Value = pTW.id;
-                            dgv_persons[1, i].Value = pTW.persons.surname + " " + pTW.persons.name + " " + pTW.persons.patronymic;
-                            dgv_persons[2, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); // longDate для месяца
-                            dgv_persons[3, i].Value = pTW.persons.gender;
-                            dgv_persons[4, i].Value = pTW.persons.addressCountry + " " + pTW.persons.addressCity + " " + pTW.persons.addressStreet + " " + pTW.persons.addressHome;
-                            dgv_persons[5, i].Value = pTW.persons.typeQualification.nameQualification;
-                            dgv_persons[6, i].Value = pTW.persons.trainingDirection;
-                            dgv_persons[7, i].Value = pTW.persons.profile;
-                            dgv_persons[8, i].Value = pTW.persons.yeatIssue;
-                            dgv_persons[9, i].Value = pTW.nameStateOrg;
-                            dgv_persons[10, i].Value = pTW.educational;
-                            dgv_persons[11, i].Value = pTW.nameOrg;
-                            dgv_persons[12, i].Value = pTW.post;
-                            dgv_persons[13, i].Value = pTW.cityOrg;
-                            dgv_persons[14, i].Value = pTW.numCertificate;
-                            dgv_persons[15, i].Value = pTW.freeWork.nameFreeWork;
-                            dgv_persons[16, i].Value = pTW.numReference;
-                            dgv_persons[17, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
-                            dgv_persons[18, i].Value = pTW.commentary;
-                            i++;
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("Человека с таким профилем нет");
-                        mTextB_Search.Text = "";
-                    }
-                }
-                if (mRadio_cityOrg.Checked == true)
-                {
-                    funFilter();
-                    var ser = db.persToWork.Where(obj => mTextB_Search.Text.Contains(obj.cityOrg)).ToList();
-                    if (ser.Count() > 0)
-                    {
-                        dgv_persons.Rows.Add(ser.Count());
-                        foreach (persToWork pTW in ser) // Заполнение таблицы 
-                        {
-                            dgv_persons[0, i].Value = pTW.id;
-                            dgv_persons[1, i].Value = pTW.persons.surname + " " + pTW.persons.name + " " + pTW.persons.patronymic;
-                            dgv_persons[2, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); // longDate для месяца
-                            dgv_persons[3, i].Value = pTW.persons.gender;
-                            dgv_persons[4, i].Value = pTW.persons.addressCountry + " " + pTW.persons.addressCity + " " + pTW.persons.addressStreet + " " + pTW.persons.addressHome;
-                            dgv_persons[5, i].Value = pTW.persons.typeQualification.nameQualification;
-                            dgv_persons[6, i].Value = pTW.persons.trainingDirection;
-                            dgv_persons[7, i].Value = pTW.persons.profile;
-                            dgv_persons[8, i].Value = pTW.persons.yeatIssue;
-                            dgv_persons[9, i].Value = pTW.nameStateOrg;
-                            dgv_persons[10, i].Value = pTW.educational;
-                            dgv_persons[11, i].Value = pTW.nameOrg;
-                            dgv_persons[12, i].Value = pTW.post;
-                            dgv_persons[13, i].Value = pTW.cityOrg;
-                            dgv_persons[14, i].Value = pTW.numCertificate;
-                            dgv_persons[15, i].Value = pTW.freeWork.nameFreeWork;
-                            dgv_persons[16, i].Value = pTW.numReference;
-                            dgv_persons[17, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
-                            dgv_persons[18, i].Value = pTW.commentary;
-                            i++;
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("Данного горда нет или в базе отсутсвуют людей, которые в нем проживают");
-                        mTextB_Search.Text = "";
-                    }
-                }
-                if (mRadio_FreeWork.Checked == true)
-                {
-                    funFilter();
-                    var ser = db.persToWork.Where(obj => mTextB_Search.Text.Contains(obj.freeWork.nameFreeWork)).ToList();
-                    if (ser.Count() > 0)
-                    {
-                        dgv_persons.Rows.Add(ser.Count());
-                        foreach (persToWork pTW in ser) // Заполнение таблицы 
-                        {
-                            dgv_persons[0, i].Value = pTW.id;
-                            dgv_persons[1, i].Value = pTW.persons.surname + " " + pTW.persons.name + " " + pTW.persons.patronymic;
-                            dgv_persons[2, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); // longDate для месяца
-                            dgv_persons[3, i].Value = pTW.persons.gender;
-                            dgv_persons[4, i].Value = pTW.persons.addressCountry + " " + pTW.persons.addressCity + " " + pTW.persons.addressStreet + " " + pTW.persons.addressHome;
-                            dgv_persons[5, i].Value = pTW.persons.typeQualification.nameQualification;
-                            dgv_persons[6, i].Value = pTW.persons.trainingDirection;
-                            dgv_persons[7, i].Value = pTW.persons.profile;
-                            dgv_persons[8, i].Value = pTW.persons.yeatIssue;
-                            dgv_persons[9, i].Value = pTW.nameStateOrg;
-                            dgv_persons[10, i].Value = pTW.educational;
-                            dgv_persons[11, i].Value = pTW.nameOrg;
-                            dgv_persons[12, i].Value = pTW.post;
-                            dgv_persons[13, i].Value = pTW.cityOrg;
-                            dgv_persons[14, i].Value = pTW.numCertificate;
-                            dgv_persons[15, i].Value = pTW.freeWork.nameFreeWork;
-                            dgv_persons[16, i].Value = pTW.numReference;
-                            dgv_persons[17, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
-                            dgv_persons[18, i].Value = pTW.commentary;
-                            i++;
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("Человека с таким самоустройством нет");
-                        mTextB_Search.Text = "";
-                    }
-                }
-                if (mRadio_all.Checked == true)
-                {
-                    funFilter();
-                    var ser = db.persToWork;
-          
-                    if (ser.Count() > 0)
-                    {
-                        dgv_persons.Rows.Add(ser.Count());
-                        foreach (persToWork pTW in ser) // Заполнение таблицы 
-                        {
-                            dgv_persons[0, i].Value = pTW.id;
-                            dgv_persons[1, i].Value = pTW.persons.surname + " " + pTW.persons.name + " " + pTW.persons.patronymic;
-                            dgv_persons[2, i].Value = pTW.persons.birthday.Value.Date.ToShortDateString(); // longDate для месяца
-                            dgv_persons[3, i].Value = pTW.persons.gender;
-                            dgv_persons[4, i].Value = pTW.persons.addressCountry + " " + pTW.persons.addressCity + " " + pTW.persons.addressStreet + " " + pTW.persons.addressHome;
-                            dgv_persons[5, i].Value = pTW.persons.typeQualification.nameQualification;
-                            dgv_persons[6, i].Value = pTW.persons.trainingDirection;
-                            dgv_persons[7, i].Value = pTW.persons.profile;
-                            dgv_persons[8, i].Value = pTW.persons.yeatIssue;
-                            dgv_persons[9, i].Value = pTW.nameStateOrg;
-                            dgv_persons[10, i].Value = pTW.educational;
-                            dgv_persons[11, i].Value = pTW.nameOrg;
-                            dgv_persons[12, i].Value = pTW.post;
-                            dgv_persons[13, i].Value = pTW.cityOrg;
-                            dgv_persons[14, i].Value = pTW.numCertificate;
-                            dgv_persons[15, i].Value = pTW.freeWork.nameFreeWork;
-                            dgv_persons[16, i].Value = pTW.numReference;
-                            dgv_persons[17, i].Value = pTW.verificationArrival == "T" ? "В наличии" : "отсутствует"; ;
-                            dgv_persons[18, i].Value = pTW.commentary;
-                            i++;
-                            // dgv_persons.Columns[1].Width = 150;
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("БД пустая");
-                        mTextB_Search.Text = "";
-                    }
-                }
-                countPersons.Text = "Всего записей: " + dgv_persons.Rows.Count.ToString();
-            }
-        }
-
-        private void MTextB_Search_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Enter)
-            {
-                mButSerch.PerformClick();
-            }
-        }
-        #endregion
-
-        #region Выбор 1 RadioButton из фильтра поиска
-        public void funRadio()
-        {
-            dgv_persons.Columns.Clear();
-            dgv_persons.Rows.Clear();
-            mTextB_Search.Enabled = true;
-            mButSerch.Visible = true;
-            mTextB_Search.Visible = true;
-            countPersons.Text = "";
-            mTextB_Search.Text = "";
-        }
-        private void MRadio_sSurname_CheckedChanged(object sender, EventArgs e)
-        {
-            RadioButton radio = (RadioButton)sender;
-            if (radio.Checked)
-            {
-                switch (radio.Name)
-                {
-                    case "mRadio_Surname": funRadio(); break;
-                    case "mRadio_Birthday": funRadio(); break;
-                    case "mRadio_gender": funRadio(); break;
-                    case "mRadio_addressCity": funRadio(); break;
-
-                    case "mRadio_qualification": funRadio(); break;
-                    case "mRadio_TrainingDirection": funRadio(); break;
-                    case "mRadio_profile": funRadio(); break;
-                    case "mRadio_YearIssue": funRadio(); break;
-                  
-                    case "mRadio_nameStateOrg": funRadio(); break;
-                    case "mRadio_educational": funRadio(); break;
-                    case "mRadio_NumOrg": funRadio(); break;
-                    case "mRadio_Post": funRadio(); break;
-                    case "mRadio_cityOrg": funRadio(); break;
-
-                    case "mRadio_FreeWork": funRadio(); break;
-                    case "mRadio_all":
-                        dgv_persons.Columns.Clear();
-                        dgv_persons.Rows.Clear();
-                        mTextB_Search.Text = "";
-                        mTextB_Search.Enabled = false;
-                        mTextB_Search.Visible = false;
-                        mButSerch.Visible = true;
-                        break;
-                    default:break;
-                }
-            }
-        }
-        #endregion
-
         #region Добавить новую персону
         private void Menu_addPerson_Click(object sender, EventArgs e)
         {
@@ -788,9 +117,6 @@ namespace Graduate
         private void Form1_Load(object sender, EventArgs e)
         {
             countPersons.Text = "Всего записей: " + dgv_persons.Rows.Count.ToString();
-            mTextB_Search.Visible = false;// поле поиска
-            mButSerch.Visible = false; // кнопка поиска
-
             label_excele.Visible = false;// Прогресс заполнения Excele
             ProgressExcele.Visible = false;// Прогресс заполнения Excele
 
@@ -809,6 +135,7 @@ namespace Graduate
             }
             else { Application.Exit(); }
             MenuAdmin.Visible = false;
+
             /*if (Convert.ToInt32(userRole) == 1)
             {
                 MenuAdmin.Visible = true;
@@ -816,9 +143,80 @@ namespace Graduate
             else {
                 MenuAdmin.Visible = false;
             }*/
+            #endregion
 
+            #region Фильтр поиска
+            groupBox1.Size = new Size(541, 513);
+            dgv_persons.Bounds = new Rectangle(10, 10, 445, 420);
+            dgv_persons.Dock = DockStyle.Fill;
+            dgv_persons.AllowUserToAddRows = false;
+
+            groupBox1.Controls.Add(dgv_persons);
+
+            DataTable DT = new DataTable();
+            DT.Columns.Add("id");
+            DT.Columns.Add("ФИО");
+            DT.Columns.Add("Дата рождения");
+            DT.Columns.Add("Пол");
+            DT.Columns.Add("Адресс проживания");
+            DT.Columns.Add("Квалификационный уровень");
+            DT.Columns.Add("Направление подготовки");
+            DT.Columns.Add("Профиль");
+            DT.Columns.Add("Год выпуска");
+            DT.Columns.Add("Название государственной организации");
+            DT.Columns.Add("Образовательное учреждение");
+            DT.Columns.Add("Название организации(предприятия)");
+            DT.Columns.Add("Должность");
+            DT.Columns.Add("Город организации");
+            DT.Columns.Add("№ свидетельства");
+            DT.Columns.Add("Самостоятельное трудоустройство");
+            DT.Columns.Add("№ справки");
+            DT.Columns.Add("Подтверждение прибытия");
+            DT.Columns.Add("Дополнительная информация");
+            //DG.Columns[0].Visible = false; // id не видим
+
+            //try
+            // { Чтобы при фильтрации ошибка не вылетала index = -1 or 0 
+            // if (e.RowIndex > 0)
+
+            using (DataBase db = new DataBase())
+            {
+                var ser = db.persToWork;
+                if (ser.Count() > 0)
+                {
+                    foreach (persToWork pTW in ser)
+                    {
+                        DT.Rows.Add(
+                        pTW.id,
+                        pTW.persons.surname + " " + pTW.persons.name + " " + pTW.persons.patronymic,
+                        pTW.persons.birthday,
+                        pTW.persons.gender,
+                        pTW.persons.addressCountry + " " + pTW.persons.addressCity + " " + pTW.persons.addressStreet + " " + pTW.persons.addressHome,
+                        pTW.persons.typeQualification.nameQualification,
+                        pTW.persons.trainingDirection,
+                        pTW.persons.profile,
+                        pTW.persons.yeatIssue,
+                        pTW.nameStateOrg,
+                        pTW.educational,
+                        pTW.nameOrg,
+                        pTW.post,
+                        pTW.cityOrg,
+                        pTW.numCertificate,
+                        pTW.freeWork.nameFreeWork,
+                        pTW.numReference,
+                        pTW.verificationArrival == "T" ? "В наличии" : "отсутствует",
+                        pTW.commentary
+                        );
+                    }
+                }
+            }
+            countPersons.Text = "Всего записей: " + DT.Rows.Count.ToString();
+            DataSet DS = new DataSet();
+            DS.Tables.Add(DT);
+            dgv_persons.DataSource = DS.Tables[0];
         }
         #endregion
+        
 
         #region О Программе
         private void Menu_aboutProg_Click(object sender, EventArgs e)
@@ -907,9 +305,11 @@ namespace Graduate
             new f_OrderFreeWork(idUser).ShowDialog();
         }
         #endregion
-    
-        // Выход из програмы
-        private void Menu_exit_Click(object sender, EventArgs e){ Close(); }
+
+        #region Выход из програмы
+        private void Menu_exit_Click(object sender, EventArgs e)
+        { Close(); }
+        #endregion
 
         #region Нумерация строк
         private void Dgv_persons_RowPrePaint_1(object sender, DataGridViewRowPrePaintEventArgs e)
@@ -922,9 +322,11 @@ namespace Graduate
         }
         #endregion
 
+        #region Удалить студентов с годом выпуска
         private void Menu_delYearIssue_Click(object sender, EventArgs e)
         {
             new f_clearPersYear(idUser).ShowDialog();
         }
+        #endregion
     }
 }

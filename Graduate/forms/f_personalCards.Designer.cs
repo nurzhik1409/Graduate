@@ -65,7 +65,6 @@
             this.groupBox4 = new System.Windows.Forms.GroupBox();
             this.mTextB_cityOrg = new MetroFramework.Controls.MetroTextBox();
             this.mTextB_educational = new MetroFramework.Controls.MetroTextBox();
-            this.metroTextBox1 = new MetroFramework.Controls.MetroTextBox();
             this.dateTime_birthday = new System.Windows.Forms.DateTimePicker();
             this.groupB_FIO.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -115,7 +114,7 @@
             // metroLabel3
             // 
             this.metroLabel3.AutoSize = true;
-            this.metroLabel3.Location = new System.Drawing.Point(102, 180);
+            this.metroLabel3.Location = new System.Drawing.Point(118, 180);
             this.metroLabel3.Name = "metroLabel3";
             this.metroLabel3.Size = new System.Drawing.Size(109, 19);
             this.metroLabel3.TabIndex = 52;
@@ -976,36 +975,6 @@
             this.mTextB_educational.WaterMarkColor = System.Drawing.Color.FromArgb(((int)(((byte)(109)))), ((int)(((byte)(109)))), ((int)(((byte)(109)))));
             this.mTextB_educational.WaterMarkFont = new System.Drawing.Font("Segoe UI Semilight", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             // 
-            // metroTextBox1
-            // 
-            // 
-            // 
-            // 
-            this.metroTextBox1.CustomButton.Image = null;
-            this.metroTextBox1.CustomButton.Location = new System.Drawing.Point(189, 1);
-            this.metroTextBox1.CustomButton.Name = "";
-            this.metroTextBox1.CustomButton.Size = new System.Drawing.Size(21, 21);
-            this.metroTextBox1.CustomButton.Style = MetroFramework.MetroColorStyle.Blue;
-            this.metroTextBox1.CustomButton.TabIndex = 1;
-            this.metroTextBox1.CustomButton.Theme = MetroFramework.MetroThemeStyle.Light;
-            this.metroTextBox1.CustomButton.UseSelectable = true;
-            this.metroTextBox1.CustomButton.Visible = false;
-            this.metroTextBox1.Lines = new string[0];
-            this.metroTextBox1.Location = new System.Drawing.Point(23, 420);
-            this.metroTextBox1.MaxLength = 32767;
-            this.metroTextBox1.Name = "metroTextBox1";
-            this.metroTextBox1.PasswordChar = '\0';
-            this.metroTextBox1.ScrollBars = System.Windows.Forms.ScrollBars.None;
-            this.metroTextBox1.SelectedText = "";
-            this.metroTextBox1.SelectionLength = 0;
-            this.metroTextBox1.SelectionStart = 0;
-            this.metroTextBox1.ShortcutsEnabled = true;
-            this.metroTextBox1.Size = new System.Drawing.Size(211, 23);
-            this.metroTextBox1.TabIndex = 61;
-            this.metroTextBox1.UseSelectable = true;
-            this.metroTextBox1.WaterMarkColor = System.Drawing.Color.FromArgb(((int)(((byte)(109)))), ((int)(((byte)(109)))), ((int)(((byte)(109)))));
-            this.metroTextBox1.WaterMarkFont = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Pixel);
-            // 
             // dateTime_birthday
             // 
             this.dateTime_birthday.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
@@ -1020,7 +989,6 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(824, 556);
             this.Controls.Add(this.dateTime_birthday);
-            this.Controls.Add(this.metroTextBox1);
             this.Controls.Add(this.groupBox4);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.groupBox2);
@@ -1085,7 +1053,6 @@
         private System.Windows.Forms.Panel panel1;
         private MetroFramework.Controls.MetroTextBox mTextB_addressFlat;
         private MetroFramework.Controls.MetroTextBox mTextB_addressHome;
-        private MetroFramework.Controls.MetroTextBox metroTextBox1;
         private System.Windows.Forms.DateTimePicker dateTime_birthday;
     }
 }
